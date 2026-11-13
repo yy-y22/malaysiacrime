@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test import TestCase
 
 
@@ -9,7 +10,10 @@ class ShowTestCase(TestCase):
     fixtures = ['crime/fixtures/crimes']
 
     def setUp(self):
-        pass
+        # App-local templates match this test's isolated URL configuration.
+        original_dirs = settings.TEMPLATE_DIRS
+        self.addCleanup(setattr, settings, 'TEMPLATE_DIRS', original_dirs)
+        settings.TEMPLATE_DIRS = ()
 
     def test_get_show_id(self):
         """

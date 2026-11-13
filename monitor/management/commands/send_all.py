@@ -24,7 +24,11 @@ class Command(BaseCommand):
 
         # Iterate all monitons. Send emails on crimes that are of interest.
         for m in Moniton.objects.all():
-            crimes = [x for x in latest_crimes if m.top >= x.lat and m.bottom <= m.right >= x.lng and m.left <= x.lng]
+            crimes = [
+                x for x in latest_crimes
+                if m.bottom <= x.lat <= m.top
+                and m.left <= x.lng <= m.right
+            ]
             if crimes:
                 try:
                     send_mail('[Malaysia Crime] Notification of Crimes',

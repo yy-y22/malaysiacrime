@@ -1,0 +1,30 @@
+name: Docker tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build the WP1 Docker image
+        run: docker compose build web
+
+      - name: Run all four applications' tests
+        run: |
+          docker compose run --rm --no-deps -T web sh -ec '
+            if [ ! -f settings.py ]; then
+              cp settings_default.py settings.py
+            fi
+            python manage.py test crime main monitor feeds --settings=malaysiacrime.settings_default --noinput
+          '

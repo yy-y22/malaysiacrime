@@ -93,5 +93,6 @@ INSTALLED_APPS = (
     'south',
     'crime',
     'main',
+    'feeds',
     'monitor',
 )

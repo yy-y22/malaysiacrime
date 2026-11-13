@@ -1,4 +1,5 @@
 from datetime import datetime
+from xml.etree import ElementTree
 from django.test import TestCase
 
 
@@ -51,6 +52,20 @@ class MainTestCase(TestCase):
         Test accessing sitemap.xml.
         """
         response = self.client.get('/sitemap.xml')
+
+        self.assertEquals(response.status_code, 200)
+        root = ElementTree.fromstring(response.content)
+        namespace = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
+        self.assertEquals(root.tag, namespace + 'urlset')
+        self.assertEquals(
+            [entry.find(namespace + 'loc').text for entry in root],
+            [entry['location'] for entry in response.context['urlset']]
+        )
+        self.assertEquals(
+            [entry.find(namespace + 'lastmod').text for entry in root],
+            ['2009-04-01', '2009-04-30', '2009-05-01']
+        )
+        self.assertEquals(root.findall('.//' + namespace + 'priority'), [])
 
         self.assertEquals(response.context['urlset'][0]['location'], "http://example.com/crime/title/terrible-crime-2/")
         self.assertEquals(response.context['urlset'][1]['location'], "http://example.com/crime/title/kidnap-of-dpm/")
