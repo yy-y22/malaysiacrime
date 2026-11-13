@@ -1,0 +1,8 @@
+.git
+.venv
+venv
+env
+malaysiacrime-venv27
+__pycache__
+*.pyc
+dev.db
