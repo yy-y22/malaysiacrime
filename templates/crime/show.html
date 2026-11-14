@@ -2,24 +2,23 @@
 {% load comments %}
 {% load markup %}
 
-{% block meta %}
-    <meta name="description" content="{{ crime.details|markdown:"safe"|truncatewords:"50" }}">
-{% endblock %}
-
 {% block map_script %}
-    <script src="{% url main-icons-js %}" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="text/javascript">
         var map = null;
 
         function initialize() {
-            if (GBrowserIsCompatible()) {
-                point = new GLatLng({{ crime.lat }}, {{ crime.lng}});
-                map = new GMap2(document.getElementById("map_show"));
-                map.setCenter(point, {{ crime.zoom }});
-                map.setUIToDefault();
-                map.disableScrollWheelZoom();
-                map.addOverlay(new GMarker(point, {{ crime.icon }}))
-            }
+            map = L.map('map_show', {
+                scrollWheelZoom: false
+            });
+            map.setView([{{ crime.lat }}, {{ crime.lng }}], {{ crime.zoom }});
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker([{{ crime.lat }}, {{ crime.lng }}]).addTo(map);
         }
     </script>
 {% endblock %}
