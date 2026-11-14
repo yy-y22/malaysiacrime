@@ -5,6 +5,9 @@
 {% block map_script %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{% url main-icons-js %}" type="text/javascript"></script>
     <script type="text/javascript">
         var map = null;
 
@@ -18,7 +21,7 @@
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
-            L.marker([{{ crime.lat }}, {{ crime.lng }}]).addTo(map);
+            L.marker([{{ crime.lat }}, {{ crime.lng }}], {icon: {{ crime.icon|default:"G_DEFAULT_ICON" }}}).addTo(map);
         }
     </script>
 {% endblock %}
