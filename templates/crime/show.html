@@ -12,14 +12,16 @@
         var map = null;
 
         function initialize() {
-            if (GBrowserIsCompatible()) {
-                point = new GLatLng({{ crime.lat }}, {{ crime.lng}});
-                map = new GMap2(document.getElementById("map_show"));
-                map.setCenter(point, {{ crime.zoom }});
-                map.setUIToDefault();
-                map.disableScrollWheelZoom();
-                map.addOverlay(new GMarker(point, {{ crime.icon }}))
-            }
+            map = L.map('map_show').setView([{{ crime.lat }}, {{ crime.lng }}], {{ crime.zoom }});
+
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            map.scrollWheelZoom.disable();
+
+            L.marker([{{ crime.lat }}, {{ crime.lng }}], {icon: {{ crime.icon }}}).addTo(map);
         }
     </script>
 {% endblock %}
@@ -38,6 +40,7 @@
         {% endif %}
     </div>
     <div id="map_show" class="span-24 last"></div>
+    <script type="text/javascript">initialize();</script>
 
     <div class="details span-24 last">{{ crime.details|markdown:"safe" }}</div>
 
