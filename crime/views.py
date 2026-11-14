@@ -32,7 +32,7 @@ def title(request, slug, template_name='crime/show.html'):
         'crime': crime,
         'now': datetime.now(),
     })
-    return render_to_response(template_name, context)
+    return render_to_response(template_name, context_instance=context)
 
 def create(request, form_class=CrimeCreateForm, template_name='crime/create.html'):
     """
@@ -53,7 +53,7 @@ def create(request, form_class=CrimeCreateForm, template_name='crime/create.html
     context = RequestContext(request, {
         'form': form,
     })
-    return render_to_response(template_name, context)
+    return render_to_response(template_name, context_instance=context)
 
 def update(request, id, form_class=CrimeUpdateForm, template_name='crime/update.html'):
     """
@@ -76,5 +76,4 @@ def update(request, id, form_class=CrimeUpdateForm, template_name='crime/update.
         'crime': crime,
         'form': form,
     })
-    return render_to_response(template_name, context)
-
+    return render_to_response(template_name, context_instance=context)

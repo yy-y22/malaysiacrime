@@ -61,7 +61,7 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'malaysiacrime.SetRemoteAddrFromForwardedFor',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -69,6 +69,7 @@ MIDDLEWARE_CLASSES = (
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.auth",
+    "django.core.context_processors.csrf",
     "django.core.context_processors.debug",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
