@@ -2,6 +2,10 @@
 {% load comments %}
 {% load markup %}
 
+{% block meta %}
+    <meta name="description" content="{{ crime.details|markdown:"safe"|truncatewords:"50" }}">
+{% endblock %}
+
 {% block map_script %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
