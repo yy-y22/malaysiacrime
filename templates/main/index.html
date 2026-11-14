@@ -49,9 +49,6 @@
                     {{ crime.lat }}, {{ crime.lng }}, {{ crime.icon }}));
             {% endfor %}
         }
-
-        // Initialize map on DOM ready
-        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 {% endblock %}
 
@@ -68,6 +65,7 @@
         Showing <strong>{{ crimes.count }}</strong> of <strong>{{ crime_total }}</strong> Crime Reports
     </div>
     <div id="map_index" class="span-24 last"></div>
+    <script type="text/javascript">initialize();</script>
 
     <div class="span-18">
     {% for crime in crimes %}
