@@ -1,0 +1,81 @@
+graph TD
+    subgraph L1[" "]
+        h1["1. WHO STARTS IT<br/>a person or<br/>a timer"]
+        browser["Web browser<br/>(a visitor)"]
+        cron["cron timer<br/>(once a day)"]
+    end
+
+    gmaps["Google Maps API v2<br/>(shut down)"]
+
+    subgraph L2[" "]
+        h2["2. URL ROUTER<br/>reads the address,<br/>picks an app"]
+        urls["urls.py"]
+    end
+
+    subgraph L3[" "]
+        h3["3. APPS<br/>Python code that<br/>builds each page"]
+        comments["comments<br/>(built into Django)"]
+        main["main<br/>home page, lists"]
+        feeds["feeds<br/>GeoRSS feeds"]
+        crime["crime<br/>report, show, edit"]
+        monitor["monitor<br/>subscribe to an area"]
+        sendall["monitor: send_all<br/>(command)"]
+    end
+
+    subgraph L4[" "]
+        h4["4. MODELS<br/>the kinds of data;<br/>each one is a table"]
+        commentModel["Comment<br/>a comment on a report"]
+        crimeModel["Crime<br/>one crime report"]
+        monitonModel["Moniton<br/>an email + map area"]
+    end
+
+    email["Email server"]
+
+    subgraph L5[" "]
+        h5["5. DATABASE<br/>the file that<br/>stores all data"]
+        db[("SQLite dev.db")]
+    end
+
+    h1 ~~~ h2 ~~~ h3 ~~~ h4 ~~~ h5
+
+    browser -.->|map script| gmaps
+    browser -->|request| urls
+    cron --> sendall
+
+    urls -->|"/comments/"| comments
+    urls -->|"/"| main
+    urls -->|"/feeds/"| feeds
+    urls -->|"/crime/"| crime
+    urls -->|"/monitor/"| monitor
+
+    comments --> commentModel
+    main --> commentModel
+    feeds --> commentModel
+    crime --> commentModel
+    main --> crimeModel
+    feeds --> crimeModel
+    crime --> crimeModel
+    sendall --> crimeModel
+    monitor --> monitonModel
+    sendall --> monitonModel
+    sendall -.->|alert emails| email
+
+    commentModel --> db
+    crimeModel --> db
+    monitonModel --> db
+
+    classDef head fill:none,stroke:none,color:#000,font-weight:bold
+    classDef user fill:#e3f2fd,stroke:#1e88e5,color:#000
+    classDef route fill:#ede7f6,stroke:#5e35b1,color:#000
+    classDef app fill:#e8f5e9,stroke:#43a047,color:#000
+    classDef model fill:#fff8e1,stroke:#f9a825,color:#000
+    classDef store fill:#eceff1,stroke:#546e7a,color:#000
+    classDef ext fill:#ffebee,stroke:#c62828,color:#000,stroke-dasharray:5 5
+
+    class h1,h2,h3,h4,h5 head
+    class browser,cron user
+    class urls route
+    class crime,main,feeds,comments,monitor,sendall app
+    class crimeModel,commentModel,monitonModel model
+    class db store
+    class gmaps,email ext
