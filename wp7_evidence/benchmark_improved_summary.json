@@ -1,0 +1,61 @@
+{
+  "tag": "improved",
+  "timestamp_utc": "2026-11-14T11:47:42.454197+00:00",
+  "base_url": "http://127.0.0.1:8000",
+  "requests": 30,
+  "warmups": 5,
+  "summary": [
+    {
+      "version": "improved",
+      "endpoint": "/",
+      "label": "Homepage",
+      "success": 30,
+      "failed": 0,
+      "median_ms": 157.93,
+      "mean_ms": 163.05,
+      "p95_ms": 199.03,
+      "min_ms": 145.1,
+      "max_ms": 205.48,
+      "body_bytes_example": 21882
+    },
+    {
+      "version": "improved",
+      "endpoint": "/?page=2",
+      "label": "Homepage page 2",
+      "success": 30,
+      "failed": 0,
+      "median_ms": 169.06,
+      "mean_ms": 168.14,
+      "p95_ms": 193.88,
+      "min_ms": 143.69,
+      "max_ms": 212.69,
+      "body_bytes_example": 21917
+    },
+    {
+      "version": "improved",
+      "endpoint": "/?page=50",
+      "label": "Homepage page 50",
+      "success": 30,
+      "failed": 0,
+      "median_ms": 155.37,
+      "mean_ms": 154.83,
+      "p95_ms": 183.52,
+      "min_ms": 134.43,
+      "max_ms": 196.45,
+      "body_bytes_example": 21884
+    },
+    {
+      "version": "improved",
+      "endpoint": "/recent/updated/",
+      "label": "Recent Updated",
+      "success": 30,
+      "failed": 0,
+      "median_ms": 1083.25,
+      "mean_ms": 1098.39,
+      "p95_ms": 1172.99,
+      "min_ms": 1045.09,
+      "max_ms": 1480.33,
+      "body_bytes_example": 173559
+    }
+  ]
+}
