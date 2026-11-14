@@ -49,8 +49,10 @@ MEDIA_URL = '/static/'
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = '/media/'
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = '----i-am-not-telling-you---'
+# Provide this value through the environment; never use a shared fallback key.
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise RuntimeError('The SECRET_KEY environment variable must be set.')
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
