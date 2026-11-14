@@ -2,6 +2,7 @@ from django import forms
 from django.utils.translation import ugettext as _
 
 from models import Crime
+from crime.passwords import check_report_password, make_report_password
 
 
 ICONS = ('G_DEFAULT_ICON', 'REMPIT_ICON', 'GUN_ICON', 'SKULL_ICON', 'PARANG_ICON', 'RAPE_ICON')
@@ -30,6 +31,13 @@ class CrimeCreateForm(forms.ModelForm):
             raise forms.ValidationError(_("The passwords do not match."))
         return password2
 
+    def save(self, commit=True):
+        crime = super(CrimeCreateForm, self).save(commit=False)
+        crime.password = make_report_password(self.cleaned_data['password'])
+        if commit:
+            crime.save()
+        return crime
+
     class Meta(object):
         model = Crime
         exclude = ['slug', 'remote_address', 'is_removed', 'created_at', 'updated_at']
@@ -52,9 +60,16 @@ class CrimeUpdateForm(forms.ModelForm):
 
     def clean_password(self):
         password = self.cleaned_data.get('password')
-        if password != self.instance.password:
+        if not check_report_password(password, self.instance.password):
             raise forms.ValidationError(_('The password is incorrect.'))
         return password
+
+    def save(self, commit=True):
+        crime = super(CrimeUpdateForm, self).save(commit=False)
+        crime.password = make_report_password(self.cleaned_data['password'])
+        if commit:
+            crime.save()
+        return crime
 
     class Meta(object):
         model = Crime

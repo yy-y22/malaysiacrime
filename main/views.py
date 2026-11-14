@@ -23,7 +23,7 @@ def index(request, template_name='main/index.html'):
         'crime_total': Crime.objects.count(),
         'now': datetime.now(),
     })
-    return render_to_response(template_name, context)
+    return render_to_response(template_name, context_instance=context)
 
 def recent_updated(request, template_name='main/recent_updated.html'):
     """
@@ -39,7 +39,7 @@ def recent_updated(request, template_name='main/recent_updated.html'):
         'crime_total': Crime.objects.count(),
         'now': datetime.now(),
     })
-    return render_to_response(template_name, context)
+    return render_to_response(template_name, context_instance=context)
 
 def recent_commented(request, template_name='main/recent_commented.html'):
     """
@@ -63,4 +63,4 @@ def recent_commented(request, template_name='main/recent_commented.html'):
         'crime_total': Crime.objects.count(),
         'now': datetime.now(),
     })
-    return render_to_response(template_name, context)
+    return render_to_response(template_name, context_instance=context)

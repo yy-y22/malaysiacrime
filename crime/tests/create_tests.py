@@ -1,7 +1,8 @@
 from datetime import date
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from crime.models import Crime
+from crime.passwords import check_report_password
 
 
 class CreateTestCase(TestCase):
@@ -19,6 +20,15 @@ class CreateTestCase(TestCase):
         """
         response = self.client.get('/create/')
         self.assertTemplateUsed(response, 'crime/create.html')
+
+    def test_create_view_uses_csrf_protection(self):
+        client = Client(enforce_csrf_checks=True)
+        response = client.get('/create/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue("name='csrfmiddlewaretoken'" in response.content)
+
+        response = client.post('/create/', {})
+        self.assertEqual(response.status_code, 403)
 
     def test_post_create(self):
         """
@@ -49,7 +59,8 @@ class CreateTestCase(TestCase):
         self.assertAlmostEquals(crime.lng, inputs['lng'])
         self.assertEquals(crime.details, inputs['details'])
         self.assertEquals(crime.author, inputs['author'])
-        self.assertEquals(crime.password, inputs['password'])
+        self.assertNotEqual(crime.password, inputs['password'])
+        self.assertTrue(check_report_password(inputs['password'], crime.password))
 
     def test_post_create_password_not_match(self):
         """

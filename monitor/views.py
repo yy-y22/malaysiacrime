@@ -42,7 +42,7 @@ def subscribe(request, form_class=SubscribeForm, template_name='monitor/subscrib
     context = RequestContext(request, {
         'form': form,
     })
-    return render_to_response(template_name, context)
+    return render_to_response(template_name, context_instance=context)
 
 def unsubscribe(request, uuid, template_name='monitor/unsubscribe.html'):
     """
@@ -61,7 +61,7 @@ def unsubscribe(request, uuid, template_name='monitor/unsubscribe.html'):
     context = RequestContext(request, {
         'moniton': moniton,
     })
-    return render_to_response(template_name, context)
+    return render_to_response(template_name, context_instance=context)
 
 def information(request, uuid, template_name='monitor/information.html'):
     """
@@ -75,4 +75,4 @@ def information(request, uuid, template_name='monitor/information.html'):
     context = RequestContext(request, {
         'moniton': moniton,
     })
-    return render_to_response(template_name, context)
+    return render_to_response(template_name, context_instance=context)

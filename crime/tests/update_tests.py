@@ -2,6 +2,7 @@ from datetime import date
 from django.test import TestCase
 
 from crime.models import Crime
+from crime.passwords import check_report_password
 
 
 class UpdateTestCase(TestCase):
@@ -45,6 +46,7 @@ class UpdateTestCase(TestCase):
 
         crime = Crime.objects.get(pk=1)
         self.assertEquals(crime.headline, inputs['headline'])
+        self.assertTrue(check_report_password(inputs['password'], crime.password))
 
     def test_post_update_password_unmatch(self):
         """
