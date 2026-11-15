@@ -7,6 +7,12 @@
 {% endblock %}
 
 {% block map_script %}
+    <script type="text/javascript">
+        // Compatibility shims for legacy icon definitions
+        function GIcon() {}
+        function GSize(w, h) { return [w, h]; }
+        function GPoint(x, y) { return [x, y]; }
+    </script>
     <script src="{% url main-icons-js %}" type="text/javascript"></script>
     <script type="text/javascript">
         var map = null;
@@ -26,9 +32,25 @@
             window.setTimeout(setupMarkers, 0);
         }
 
+        // Helper to convert legacy icon objects to Leaflet icon
+        function getLeafletIcon(icon) {
+            if (icon && icon.image) {
+                return L.icon({
+                    iconUrl: icon.image,
+                    shadowUrl: icon.shadow || undefined,
+                    iconSize: icon.iconSize || [39, 39],
+                    shadowSize: icon.shadowSize || [59, 39],
+                    iconAnchor: icon.iconAnchor || [20, 39],
+                    popupAnchor: icon.infoWindowAnchor || [0, -30]
+                });
+            }
+            return undefined;
+        }
+
         // ----- create markers
         function createMarker(text, lat, lng, icon) {
-            var marker = L.marker([lat, lng], {icon: icon});
+            var lIcon = getLeafletIcon(icon);
+            var marker = lIcon ? L.marker([lat, lng], {icon: lIcon}) : L.marker([lat, lng]);
             marker.bindPopup(text);
             return marker;
         }
