@@ -7,38 +7,60 @@
 {% endblock %}
 
 {% block map_script %}
-    <script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/1.1/src/markermanager_packed.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        // Compatibility shims for legacy icon definitions
+        function GIcon() {}
+        function GSize(w, h) { return [w, h]; }
+        function GPoint(x, y) { return [x, y]; }
+    </script>
     <script src="{% url main-icons-js %}" type="text/javascript"></script>
     <script type="text/javascript">
-    //<![CDATA[
         var map = null;
-        var mgr = null;
 
         // ----- initialize the map
         function initialize() {
-            if (GBrowserIsCompatible()) {
-                map = new GMap2(document.getElementById("map_index"));
-                map.setCenter(new GLatLng(4.0, 102.2), 7);
-                // map.setCenter(new GLatLng(3.1, 101.7), 11);
-                map.setUIToDefault();
-                map.disableScrollWheelZoom();
-                window.setTimeout(setupMarkers, 0);
+            map = L.map('map_index').setView([4.0, 102.2], 7);
+            // Alternative tighter view: map = L.map('map_index').setView([3.1, 101.7], 11);
+
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            map.scrollWheelZoom.disable();
+
+            window.setTimeout(setupMarkers, 0);
+        }
+
+        // Helper to convert legacy icon objects to Leaflet icon
+        function getLeafletIcon(icon) {
+            if (icon && icon.image) {
+                return L.icon({
+                    iconUrl: icon.image,
+                    shadowUrl: icon.shadow || undefined,
+                    iconSize: icon.iconSize || [39, 39],
+                    shadowSize: icon.shadowSize || [59, 39],
+                    iconAnchor: icon.iconAnchor || [20, 39],
+                    popupAnchor: icon.infoWindowAnchor || [0, -30]
+                });
             }
+            return undefined;
         }
 
         // ----- create markers
         function createMarker(text, lat, lng, icon) {
-            marker = new GMarker(new GLatLng(lat, lng), icon);
-            marker.bindInfoWindow(text);
+            var lIcon = getLeafletIcon(icon);
+            var marker = lIcon ? L.marker([lat, lng], {icon: lIcon}) : L.marker([lat, lng]);
+            marker.bindPopup(text);
             return marker;
         }
 
         // ----- setup markers
         function setupMarkers() {
-            var batch = [];
+            var markerLayer = L.layerGroup().addTo(map);
             {% for crime in crimes reversed %}
                 {% get_comment_count for crime as comment_count %}
-                batch.push(createMarker(
+                markerLayer.addLayer(createMarker(
                     "<span class='headlineinfo'>"
                     + "<a href='{{ crime.get_absolute_url }}'>{{crime.headline}}</a></span><br/>"
                     + "<span class='sublineinfo'>{{ crime.date|timesince:now }} ago at <strong>{{ crime.location }}</strong><br />"
@@ -46,14 +68,9 @@
                         + "// {{ comment_count }} comment{{ comment_count|pluralize }}"
                     {% endif %}
                     + "</span>",
-                    {{ crime.lat }}, {{ crime.lng }}, {{ crime.icon }}))
+                    {{ crime.lat }}, {{ crime.lng }}, {{ crime.icon }}));
             {% endfor %}
-
-            mgr = new MarkerManager(map);
-            mgr.addMarkers(batch, 0);
-            mgr.refresh();
         }
-    //]]>
     </script>
 {% endblock %}
 
@@ -70,6 +87,7 @@
         Showing <strong>{{ crimes.count }}</strong> of <strong>{{ crime_total }}</strong> Crime Reports
     </div>
     <div id="map_index" class="span-24 last"></div>
+    <script type="text/javascript">initialize();</script>
 
     <div class="span-18">
     {% for crime in crimes %}

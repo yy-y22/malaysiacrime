@@ -237,8 +237,8 @@ class IndexPaginationTestCase(RealTemplatesTestCase):
                                 ('?page=2', self.expected[20:40]), ('?page=3', self.expected[40:])]:
             response = self.get(query)
             self.assertEquals([c.pk for c in response.context['crimes']], expected)
-            # The map receives the same page of crimes as the list.
-            self.assertEquals(response.content.count('batch.push(createMarker('), len(expected))
+            # The (WP3 Leaflet) map receives the same page of crimes as the list.
+            self.assertEquals(response.content.count('markerLayer.addLayer(createMarker('), len(expected))
 
     def test_navigation_links(self):
         first, middle, last = self.get('?page=1'), self.get('?page=2'), self.get('?page=3')

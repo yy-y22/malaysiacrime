@@ -10,7 +10,7 @@
         "lng": 0,
         "zoom": 13,
         "details": "Stealing of power by force.",
-        "password": "123456",
+        "password": "pbkdf2_sha256$600000$42a23db2413e4374708ea139b3437d38$4759f77c3493d8eb3833ec7ecd4031144b0ec12d53fe76793fec5109e2a0b248",
         "created_at": "2009-01-01 12:00:00",
         "updated_at": "2009-01-01 12:00:00"}},
 
@@ -25,7 +25,7 @@
         "lng": 0,
         "zoom": 13,
         "details": "Stealing of power by force.",
-        "password": "123456",
+        "password": "pbkdf2_sha256$600000$e6c5ca9e039be71256847a5d22be0699$a18563ebe481745f867a620b4103eba810ca14898a6fb9dc9704da6b79cec31b",
         "created_at": "2009-01-02 12:00:00",
         "updated_at": "2009-01-02 12:00:00"}},
 
@@ -40,7 +40,7 @@
         "lng": 50,
         "zoom": 13,
         "details": "Stealing of power by force.",
-        "password": "123456",
+        "password": "pbkdf2_sha256$600000$2c3adcddfe3931d2d869ae9cccb31bcf$56d589e10482fe1ce65e31aa65ecdbf3df4c9a1a00257724edb7c21acca03d0f",
         "created_at": "2009-01-02 12:00:00",
         "updated_at": "2009-01-02 12:00:00"}},
 
@@ -55,7 +55,7 @@
         "lng": -50,
         "zoom": 13,
         "details": "Stealing of power by force.",
-        "password": "123456",
+        "password": "pbkdf2_sha256$600000$d9a114c58b38e50e90d570a64292efb8$5625e93bc40f5010c6296e0b2c623bc4b48341da2e6c5fe39e653c6fb1d35631",
         "created_at": "2009-01-02 12:00:00",
         "updated_at": "2009-01-02 12:00:00"}}
 ]

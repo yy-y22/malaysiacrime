@@ -1,7 +1,7 @@
 # WP7 – Recent Commented fix, shared query, homepage pagination
 
 Branch `wp7-maintenance`, created from `master` @ `3ded562ab20ce225d64698f3a5a0a183d98fb9f4`.
-Status: **approved for local commit** (not pushed, not merged).
+Status: **WP7 commit `25137486` integrated with master `f61dc244` (WP3, WP4, WP5) in a local merge commit; not pushed, no PR.** See section 12.
 
 Evidence labels: **[src]** found by reading the source, **[run]** observed when executed, **[hyp]** hypothesis, not yet verified.
 
@@ -260,3 +260,67 @@ git switch wp7-maintenance
 docker compose exec web python manage.py test crime main monitor
 ```
 Expected: `Ran 41 tests`, `FAILED (errors=1)`. The only error is the pre-existing, unresolved `test_get_sitemap` (not a WP7 regression).
+
+## 12. Integration with master `f61dc244` (WP3, WP4, WP5)
+
+**Starting point.** `wp7-maintenance` @ `25137486` (based on `3ded562`). `origin/master` @ `f61dc244d2fa92d6ed98f71bd320818e88a2371e` (merge of WP3 PR #5, WP5 PR #2, WP4 PR #4). Merge base: `3ded562`. Master changed 29 files; three of them are also changed by WP7: `crime/models.py`, `main/views.py`, `templates/main/index.html`.
+
+### Environment protection
+- **Backup first.** `dev.db` was copied to `SME/malaysiacrime-backups/dev.db.pre-wp7-integration` (sha256 identical to the original, `f008d674…4831`).
+- **The developer container was not used.** `malaysiacrime_legacy` stayed stopped. Its start-up command runs `migrate`, which with WP5's code would irreversibly hash the passwords in `dev.db`.
+- **Throwaway containers instead.** Every check ran in a throwaway container from the same image (`malaysiacrime-web`, Python 2.7.18, Django 1.3.1), with:
+  - settings `integration_settings` = `from settings_default import *` plus `DATABASE_NAME = "/data/integration.db"`. This is WP5's real configuration: CSRF middleware and `SECRET_KEY` from the environment;
+  - a throwaway random `SECRET_KEY` passed in through the environment, never printed or stored;
+  - `django-admin.py` instead of `manage.py`, because `manage.py` imports the Git-ignored local `settings.py`, which has neither WP5 change.
+- **Database copy.** The running instance used a copy of `dev.db` (mounted read-only, then copied inside the container). WP5's migrations were applied to that copy only.
+- **Proof.** [run] `dev.db` sha256 was `f008d674…4831` before and after every step. The settings module, the database path, the CSRF middleware and the presence of `SECRET_KEY` were checked inside the container before running anything.
+
+### Merge and conflicts
+[run] `git merge --no-commit --no-ff origin/master`: **no textual conflicts**; Git merged all three overlapping files automatically. Each was checked by hand:
+- `crime/models.py`: WP5 `password` `max_length=128` + WP7 `recently_commented()`, both present.
+- `main/views.py`: WP5 `render_to_response(..., context_instance=context)` in all three views + WP7 pagination, 404 handling, `crime_total = paginator.count` and the `recently_commented(500, 200)` call, all present.
+- `templates/main/index.html`: WP3 Leaflet script and `initialize();` call unchanged + WP7 `.pagination` block below the list. WP7 did not edit any map code.
+- [run] `git diff origin/master` after the merge lists exactly the 13 WP7 files, so nothing from WP3, WP4 or WP5 was lost or overwritten.
+
+**One semantic adjustment (test only).** [run] After the merge, `test_pages_are_ordered_and_sized` failed with `0 != 20`. It counted `batch.push(createMarker(`, the Google Maps v2 call that WP3 replaced with `markerLayer.addLayer(createMarker(`. The assertion still requires one map marker per report on the page; only the marker text was updated to WP3's Leaflet call. This is not a loosening of the test, and no application code changed during integration.
+
+### Test evidence (integration settings, isolated `:memory:` test DB)
+
+| Tree | Labels | Ran | Result |
+|---|---|---|---|
+| master `f61dc244` (baseline, separate worktree) | `crime main monitor` | 31 | 30 pass, 1 error: `test_get_sitemap` |
+| merged | `crime main monitor` | 48 | 47 pass, 1 error: `test_get_sitemap` |
+| merged | `monitor main crime` | 48 | same |
+| merged | `main` | 21 | 20 pass, 1 error: `test_get_sitemap` |
+| merged | `crime` | 17 | OK (includes WP5's CSRF, forwarded-IP and password tests) |
+| merged | `monitor` | 10 | OK |
+
+48 = master's 31 + WP7's 17. The only error is the same pre-existing, unresolved `test_get_sitemap` error that master also has. **No new failures.**
+
+### Running-instance evidence (port 8001, migrated `dev.db` copy with seeded comments)
+
+| Check | Result |
+|---|---|
+| WP5 migrations `0004`, `0005` on the 1,000-report copy | [run] applied in 98 s; 1000 of 1000 passwords hashed |
+| `/`, `/?page=2`, `/?page=50` | [run] 200, "Showing 20 of 1000", "Page N of 50", 20 `markerLayer.addLayer` calls each |
+| `/?page=51`, `/?page=0`, `/?page=abc` | [run] 404 |
+| 201 distinct commented crimes + `invalid-id`, `99999999999999999999` and a missing id (seeded into the copy only) | [run] `/recent/commented/` 200 with 200 reports, PERFTEST-0201 … 0002 (the oldest-commented, 0001, correctly dropped) |
+| `/feeds/commented.xml` with the same data | [run] 200, valid RSS, 7 items (PERFTEST-0201 … 0195). Expected: the 10-comment window contains the 3 bad references, which are skipped but still use a slot (§3) |
+| WP5 CSRF | [run] `/crime/create/` contains `csrfmiddlewaretoken`; POST without a token returns 403 |
+| WP3 Leaflet on `/?page=2` (browser) | [run] Leaflet 1.9.4 loads, OSM tiles render, no console errors, **20 markers**, and the marker popup headlines are exactly the 20 listed reports (PERFTEST-0980 … 0961) |
+
+Browser limits: the synthetic reports all share one coordinate, so the 20 markers stack on one pin. Marker *placement* across different coordinates and popup clicking were not checked visually. Only Chromium (the desktop app's browser pane) was used.
+
+### Compatibility
+- **WP3 / WP4.** The homepage map works with pagination: it receives the current page's `crimes` (at most 20). The contract in §7 now holds with WP3's Leaflet code. Whether WP3 accepts "map shows the current page" (rather than all reports) is still their decision.
+- **WP5.** Security behaviour is unchanged: CSRF enforced, password hashing and migrations work, `SECRET_KEY` comes from the environment. WP7 tests create `Crime` rows directly with a dummy password; they never exercise the password path.
+- **Pre-existing cross-WP issue, not caused by WP7, for WP3.** `templates/main/recent_commented.html` and `recent_updated.html` still contain Google Maps v2 code (`GMap2`, `batch.push`). WP3 removed the Google Maps script from `base.html` (and the `onload="initialize()"`). [run] In the browser, `/recent/commented/` shows its 200-item list but an **empty map area**. No JavaScript error appears, because `initialize()` is never called. WP7 did not touch these templates, and master has the same state.
+- **Developer environment warning.** The next `docker compose up` needs `SECRET_KEY` and, through the container command, will run WP5's irreversible password-hashing migration on `dev.db`. A pre-integration backup exists (above). The local `settings.py` is Git-ignored and is not updated by `cp -n`, so it still lacks WP5's CSRF and `SECRET_KEY` settings until a developer recreates it from `settings_default.py`.
+
+### Benchmark after integration
+The §4 and §9 measurements (`wp7_evidence/`) remain the evidence for the WP7 change itself: original `3ded562` versus `3ded562` + WP7, same environment and dataset. **They are not a benchmark of the integrated system.** After integration:
+- the homepage includes WP3's Leaflet script, and its response size changed from 21,882 to 22,854 bytes ([run] port 8001, page 1);
+- the server ran with WP5's CSRF middleware and a migrated database;
+- the integrated system was not re-benchmarked.
+
+Nothing here supports a claim about the combined system's response time. Template work and query count still scale with the 20 reports on a page, because WP3's template keeps one `{% get_comment_count %}` per report for the map and one for the list.

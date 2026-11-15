@@ -1,24 +1,30 @@
 
 class SetRemoteAddrFromForwardedFor(object):
     """
-    Middleware that sets REMOTE_ADDR based on HTTP_X_FORWARDED_FOR, if the
-    latter is set. This is useful if you're sitting behind a reverse proxy that
-    causes each request's REMOTE_ADDR to be set to 127.0.0.1.
+    Set REMOTE_ADDR from a syntactically valid IPv4 X-Forwarded-For value.
 
-    Note that this does NOT validate HTTP_X_FORWARDED_FOR. If you're not behind
-    a reverse proxy that sets HTTP_X_FORWARDED_FOR automatically, do not use
-    this middleware. Anybody can spoof the value of HTTP_X_FORWARDED_FOR, and
-    because this sets REMOTE_ADDR based on HTTP_X_FORWARDED_FOR, that means
-    anybody can "fake" their IP address. Only use this when you can absolutely
-    trust the value of HTTP_X_FORWARDED_FOR.
+    The header must still be supplied by a trusted proxy; validating its
+    syntax does not make an untrusted header safe.
     """
     def process_request(self, request):
-        try:
-            real_ip = request.META['HTTP_X_FORWARDED_FOR']
-        except KeyError:
+        forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if not forwarded_for:
             return None
-        else:
-            # HTTP_X_FORWARDED_FOR can be a comma-separated list of IPs. The
-            # client's IP will be the first one.
-            real_ip = real_ip.split(",")[0].strip()
-            request.META['REMOTE_ADDR'] = real_ip
+
+        # The left-most address is the originating client according to the
+        # existing proxy convention.
+        real_ip = forwarded_for.split(",")[0].strip()
+        octets = real_ip.split(".")
+        if len(octets) != 4:
+            return None
+
+        for octet in octets:
+            if not octet or not all('0' <= character <= '9' for character in octet):
+                return None
+            if len(octet) > 1 and octet[0] == "0":
+                return None
+            if int(octet) > 255:
+                return None
+
+        request.META['REMOTE_ADDR'] = real_ip
+        return None
