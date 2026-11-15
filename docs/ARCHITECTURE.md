@@ -90,13 +90,9 @@ graph TD
     class maps,email ext
 ```
 
-The diagram has five layers:
+The diagram has five layers, and you read it from the top. A visitor's browser starts most actions, and a cron timer on the server starts the daily email job. Next is `urls.py`, which looks at the start of the address (like `/crime/`) and picks an app. An app is a folder of Python code for one part of the site, and its views (Python functions) build the pages. `send_all` is in the `monitor` app too, but you run it from the command line instead of a web page.
 
-1. Who starts it. Most actions start from a visitor's browser. The daily email job is started by a cron timer on the server.
-2. URL router. `urls.py` reads the start of the address (for example `/crime/`) and picks the app that handles it.
-3. Apps. A Django app is a folder of Python code for one part of the site, and its views (Python functions) build the pages. `send_all` belongs to the `monitor` app, but you run it from the command line, not from a web page.
-4. Models. A model is one kind of data, and Django saves each model as a table in the database. `Crime` is one crime report, `Comment` is a comment on a report, and `Moniton` is an email address with a map area. Most arrows go to `Crime`, because almost every app reads crime reports.
-5. Database. All the tables are saved in one SQLite file, `dev.db`.
+Under the apps are the models. Each model is one kind of data, and Django saves it as a table: `Crime` is a crime report, `Comment` is a comment on one, and `Moniton` is an email address with a map area. Most of the arrows end at `Crime`, since almost every app reads crime reports. At the bottom, all the tables live in one SQLite file, `dev.db`.
 
 The red dashed boxes are services outside our project. The browser downloads the Leaflet map library from unpkg.com and the map pictures (tiles) from OpenStreetMap, so the map only works when you're online. `send_all` sends its alerts through an email server, and our Docker setup doesn't have one.
 
@@ -124,7 +120,7 @@ The diagram is also saved as [`images/architecture.png`](images/architecture.png
 
 ### `crime`: crime reports
 
-Most of the site is built around this app. It has the `Crime` model and the pages to create, show and edit a report.
+This is the main app. All four apps use its `Crime` model, and it has the pages to create, show and edit a report.
 
 - [`models.py`](../crime/models.py) has the `Crime` model. Each report has a headline, date, location text, map position (`lat`, `lng`, `zoom`), an icon type, details, the author's name, the IP address of whoever posted it, an edit password and an `is_removed` flag. `save()` makes the URL slug from the headline. The same file has `recently_commented()`, which finds the reports with the newest comments. Both `main` and `feeds` use it. WP7 moved it here so the query is only written once.
 - [`passwords.py`](../crime/passwords.py) turns the edit password into a hash (PBKDF2 with SHA-256, 600,000 rounds) before it's saved, and checks the password when someone edits a report. WP5 added it, so passwords aren't saved as plain text anymore.

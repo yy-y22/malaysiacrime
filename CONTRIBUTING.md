@@ -1,6 +1,6 @@
 # Contributing to MalaysiaCrime
 
-These are the rules our group of 8 uses when we change this repository for WIF3005 Software Maintenance and Evolution. If everyone follows the same steps, it's easy to see who changed what, and for which work package (WP).
+These are the rules our group agreed on for changing this repository in WIF3005 Software Maintenance and Evolution. There are 8 of us pushing to one `master`, so everyone uses the same steps. That way the history shows who changed what and for which work package (WP), and WP8 can build the who-did-what table from it.
 
 If you haven't set up the project yet, follow the [README](README.md) first.
 
@@ -90,7 +90,7 @@ Also open http://127.0.0.1:8000 and look at the pages you changed yourself.
 
 ## 4. Commit your changes
 
-A commit is a saved snapshot of your changes, with a message that says what you did.
+When you commit, Git saves your changes together with a message saying what you did.
 
 ### What not to commit
 
@@ -145,7 +145,7 @@ WP3: Replace Google Maps v2 with Leaflet on homepage
 
 Bad examples: `update`, `fix bug`, `changes`, `final version 2`.
 
-Try to make small commits that each do one thing. They're a lot easier to review than one big commit.
+Keep commits small, one thing each. WP2 used one commit per document, for example, so the reviewer could check each file on its own.
 
 ## 5. Push and open a pull request
 

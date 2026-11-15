@@ -6,19 +6,13 @@ MalaysiaCrime is a website where people can report crimes on a map of Malaysia, 
 
 Our group's repository, https://github.com/yy-y22/malaysiacrime, is a fork of [Sinar/malaysiacrime](https://github.com/Sinar/malaysiacrime), which is archived now. Sinar's copy was itself a fork of [zuLazman/malaysiacrime](https://github.com/zuLazman/malaysiacrime). We are 8 students maintaining it for WIF3005 Software Maintenance and Evolution at Universiti Malaya. We split the work into work packages (WP1 to WP8), and this README is part of WP2.
 
-On the site you can:
+People use it to report a crime with a headline, date, place, details and a point on the map. You can browse the reports on the home page, or sorted by latest update or latest comment. Each report shows its comments, but the original author turned off new comments in 2011. You can also subscribe to an area of the map with your email to hear about new reports there, or follow them through GeoRSS feeds (RSS with the map position in it).
 
-- report a crime with a headline, date, place, details and a point on the map
-- browse reports on the home page, by most recent update, or by most recent comment
-- read the comments on a report (the original author turned off new comments in 2011)
-- subscribe to an area of the map with your email and get an email when there is a new report there
-- follow new reports through GeoRSS feeds, which are RSS feeds that also have the map position
-
-About the map: WP3 and WP4 replaced the old Google map with Leaflet and OpenStreetMap on the home page, the report pages and the subscribe pages. The Commented and Recently updated pages still use Google Maps API v2. Google shut that API down, so the map on those two pages is empty, but the list of reports under it still works.
+WP3 and WP4 changed the map from Google Maps to Leaflet and OpenStreetMap on the home page, the report pages and the subscribe pages. Two pages were left out, Commented and Recently updated. They still use Google Maps API v2, which Google shut down, so their map is empty. The list of reports on them still works though.
 
 ## Run it with Docker
 
-Docker runs the project inside a small Linux container that already has Python 2.7 and the right package versions, so you don't need to install Python or Django yourself.
+We use Docker because the project needs Python 2.7 and Django 1.3.1, and in Tutorial 3 some of us on Python 3 couldn't install it. The container already has the right versions, so you don't need Python or Django on your own computer.
 
 You need two things:
 
@@ -106,7 +100,7 @@ WP5 changed `settings_default.py` on 15 November 2026. If your `settings.py` is 
 2. Delete `settings.py` but keep `dev.db`. In PowerShell: `Remove-Item settings.py`. In Command Prompt: `del settings.py`. On macOS or Linux: `rm settings.py`.
 3. Set `SECRET_KEY` and start the container again. Docker makes a new `settings.py`.
 
-Be careful: the first start after WP5 also runs migration `0005`, which turns the edit passwords in your `dev.db` into hashes, and you can't undo that. If you want to keep your old database, copy `dev.db` somewhere else first.
+The first start after WP5 also runs migration `0005`. It turns the edit passwords in your `dev.db` into hashes and there's no way back, so copy `dev.db` somewhere else first if you want to keep the old one.
 
 ### Add sample data (optional)
 
