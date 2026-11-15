@@ -17,11 +17,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build the WP1 Docker image
-        run: docker compose build web
-
-      - name: Run all four applications' tests
+      - name: Build the Docker image and run tests
         run: |
+          export SECRET_KEY="$(openssl rand -hex 32)"
+          docker compose build web
           docker compose run --rm --no-deps -T web sh -ec '
             if [ ! -f settings.py ]; then
               cp settings_default.py settings.py

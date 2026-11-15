@@ -9,7 +9,7 @@
         "lng": 101.1,
         "zoom": 13,
         "details": "Stealing of power by force.",
-        "password": "123456",
+        "password": "pbkdf2_sha256$600000$da3dc61af469f8687cedc82a11f6bd2e$864e3a673c4d318c9489cce3538a408fd2253f929f5ccd10e205f61b846c601e",
         "created_at": "2009-04-03 00:00:00",
         "updated_at": "2009-04-01 00:00:00"}},
 
@@ -23,7 +23,7 @@
         "lng": 101.1,
         "zoom": 13,
         "details": "Detention without trial.",
-        "password": "123456",
+        "password": "pbkdf2_sha256$600000$589a84b50b6655c117ebc0cfa1429d69$2fe8c67b111bb8c20d79193989635427ad7cd1633533c3e790ae5c7b2d70f776",
         "created_at": "2009-04-02 00:00:00",
         "updated_at": "2009-04-30 00:00:00"}},
 
@@ -37,7 +37,7 @@
         "lng": 101.1,
         "zoom": 13,
         "details": "Waving of keris and talk about spilling blood.",
-        "password": "123456",
+        "password": "pbkdf2_sha256$600000$9517493549fd350dbf74af07830da62c$fb627aa7701a47f3e18e5c0b7427955851a12adea8340eedabfcf2fb14d7e390",
         "created_at": "2009-04-01 00:00:00",
         "updated_at": "2009-05-01 00:00:00"}}
 ]

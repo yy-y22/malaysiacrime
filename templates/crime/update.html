@@ -1,72 +1,69 @@
 {% extends "base.html" %}
 
 {% block map_script %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{% url main-icons-js %}" type="text/javascript"></script>
     <script type="text/javascript">
         var map = null;
+        var marker = null;
 
-        // ----- define the GOverlay that show marker in the middle of map
-        function CrimeMarker(icon) { this.icon_ = icon; }
-        CrimeMarker.prototype = new GOverlay();
-        CrimeMarker.prototype.initialize = function(map) {
-            var div = document.createElement("div");
-            div.style.position = "absolute";
-            div.innerHTML = ""
-                + "<img style='position:absolute;' src='" + this.icon_.shadow + "'>"
-                + "<img style='position:absolute;' src='" + this.icon_.image + "'>";
-            this.div_ = div;
-            this.map_ = map;
-            map.getPane(G_MAP_MAP_PANE).appendChild(this.div_);
-        }
-        CrimeMarker.prototype.remove = function() { this.div_.parentNode.removeChild(this.div_); }
-        CrimeMarker.prototype.copy = function() { return new CrimeMarker(this.icon_); }
-        CrimeMarker.prototype.redraw = function(force) {
-            c = this.map_.fromLatLngToDivPixel(this.map_.getCenter());
-            this.div_.style.top = c.y - this.icon_.iconAnchor.y + "px";
-            this.div_.style.left = c.x - this.icon_.iconAnchor.x + "px";
-        }
+        // ----- the only icons allowed
+        var ICONS = {
+            "G_DEFAULT_ICON": G_DEFAULT_ICON,
+            "REMPIT_ICON": REMPIT_ICON,
+            "GUN_ICON": GUN_ICON,
+            "SKULL_ICON": SKULL_ICON,
+            "PARANG_ICON": PARANG_ICON,
+            "RAPE_ICON": RAPE_ICON
+        };
 
         // ----- setup map
         function initialize() {
-            if (GBrowserIsCompatible()) {
-                // ----- setup map
-                point = new GLatLng({{ crime.lat }}, {{ crime.lng }}, {{ crime.zoom }});
-                map = new GMap2(document.getElementById("map_update"));
-                map.setCenter(point, {{ crime.zoom }});
-                map.setUIToDefault();
-                map.disableScrollWheelZoom();
-                map.addOverlay(new CrimeMarker({{ crime.icon }}));
-                setupHandler();
-            }
+            map = L.map('map_update', {
+                scrollWheelZoom: false
+            });
+            map.setView([{{ crime.lat }}, {{ crime.lng }}], {{ crime.zoom }});
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // start with the crime's saved icon, so the map and the hidden field match
+            var iconName = "{{ crime.icon }}";
+            if (!ICONS.hasOwnProperty(iconName)) { iconName = "G_DEFAULT_ICON"; }
+
+            marker = L.marker(map.getCenter(), {icon: ICONS[iconName], interactive: false}).addTo(map);
+            document.getElementById("id_icon").value = iconName;
+
+            setupHandler();
         }
 
         // ----- setup event handler
-        function handleIcon(name, icon) {
-            map.clearOverlays();
-            map.addOverlay(new CrimeMarker(icon));
-            document.getElementById('id_icon').value = name;
+        function handleIcon(name) {
+            marker.setIcon(ICONS[name]);
+            document.getElementById("id_icon").value = name;
         }
+
+        function updateFields() {
+            document.getElementById("id_lat").value = map.getCenter().lat;
+            document.getElementById("id_lng").value = map.getCenter().lng;
+            document.getElementById("id_zoom").value = map.getZoom();
+        }
+
         function setupHandler() {
             // handle icon
-            document.getElementById("id_icon").value = "{{ request.POST.icon }}" || "G_DEFAULT_ICON";
-            document.getElementById('id_icon_default').onclick = function() { handleIcon("G_DEFAULT_ICON", G_DEFAULT_ICON); }
-            document.getElementById('id_icon_rempit').onclick = function() { handleIcon("REMPIT_ICON", REMPIT_ICON); }
-            document.getElementById('id_icon_gun').onclick = function() { handleIcon("GUN_ICON", GUN_ICON); }
-            document.getElementById('id_icon_skull').onclick = function() { handleIcon("SKULL_ICON", SKULL_ICON); }
-            document.getElementById('id_icon_parang').onclick = function() { handleIcon("PARANG_ICON", PARANG_ICON); }
-            document.getElementById('id_icon_rape').onclick = function() { handleIcon("RAPE_ICON", RAPE_ICON); }
+            document.getElementById('id_icon_default').onclick = function() { handleIcon("G_DEFAULT_ICON"); }
+            document.getElementById('id_icon_rempit').onclick = function() { handleIcon("REMPIT_ICON"); }
+            document.getElementById('id_icon_gun').onclick = function() { handleIcon("GUN_ICON"); }
+            document.getElementById('id_icon_skull').onclick = function() { handleIcon("SKULL_ICON"); }
+            document.getElementById('id_icon_parang').onclick = function() { handleIcon("PARANG_ICON"); }
+            document.getElementById('id_icon_rape').onclick = function() { handleIcon("RAPE_ICON"); }
 
-            // handle lat and lng
-            document.getElementById("id_lat").value = map.getCenter().lat();
-            document.getElementById("id_lng").value = map.getCenter().lng();
-            GEvent.addListener(map, "moveend", function() {
-                document.getElementById("id_lat").value = map.getCenter().lat();
-                document.getElementById("id_lng").value = map.getCenter().lng();
-            });
-            document.getElementById("id_zoom").value = map.getZoom();
-            GEvent.addListener(map, "zoomend", function() {
-                document.getElementById("id_zoom").value = map.getZoom();
-            });
+            // handle lat, lng and zoom
+            updateFields();
+            map.on('move', function() { marker.setLatLng(map.getCenter()); });
+            map.on('moveend', updateFields);
         }
     </script>
 {% endblock %}
