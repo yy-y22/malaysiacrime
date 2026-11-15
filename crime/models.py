@@ -17,7 +17,7 @@ class Crime(models.Model):
     details        = models.TextField()
     author         = models.CharField(max_length=50)
     remote_address = models.IPAddressField(null=True)
-    password       = models.CharField(max_length=20)
+    password       = models.CharField(max_length=128)
     is_removed     = models.BooleanField(default=False)
     created_at     = models.DateTimeField(auto_now_add=True)
     updated_at     = models.DateTimeField(auto_now=True)
