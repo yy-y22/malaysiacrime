@@ -1,0 +1,61 @@
+{
+  "tag": "original",
+  "timestamp_utc": "2026-11-14T11:09:20.778169+00:00",
+  "base_url": "http://127.0.0.1:8000",
+  "requests": 30,
+  "warmups": 5,
+  "summary": [
+    {
+      "version": "original",
+      "endpoint": "/",
+      "label": "Homepage",
+      "success": 30,
+      "failed": 0,
+      "median_ms": 2571.56,
+      "mean_ms": 2591.33,
+      "p95_ms": 2707.99,
+      "min_ms": 2525.9,
+      "max_ms": 2776.44,
+      "body_bytes_example": 428784
+    },
+    {
+      "version": "original",
+      "endpoint": "/?page=2",
+      "label": "Homepage page 2",
+      "success": 30,
+      "failed": 0,
+      "median_ms": 2570.65,
+      "mean_ms": 2581.04,
+      "p95_ms": 2672.06,
+      "min_ms": 2506.83,
+      "max_ms": 2717.59,
+      "body_bytes_example": 428784
+    },
+    {
+      "version": "original",
+      "endpoint": "/?page=50",
+      "label": "Homepage page 50",
+      "success": 30,
+      "failed": 0,
+      "median_ms": 2584.4,
+      "mean_ms": 2610.19,
+      "p95_ms": 2714.84,
+      "min_ms": 2544.85,
+      "max_ms": 2927.83,
+      "body_bytes_example": 428784
+    },
+    {
+      "version": "original",
+      "endpoint": "/recent/updated/",
+      "label": "Recent Updated",
+      "success": 30,
+      "failed": 0,
+      "median_ms": 1056.02,
+      "mean_ms": 1059.66,
+      "p95_ms": 1088.83,
+      "min_ms": 1032.27,
+      "max_ms": 1137.91,
+      "body_bytes_example": 173559
+    }
+  ]
+}

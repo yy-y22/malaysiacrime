@@ -1,0 +1,13 @@
+Queries per request: connection.queries with DEBUG=True, one GET after a warm-up, against dev.db
+(sha256 f008d67495f6d80a81698625b87b49b3a2d337d7d98817efd10615371e684831, 1,000 active synthetic reports, 0 comments).
+
+original (3ded562), measured in Stage 0, output copied from the run (db= path column omitted):
+/                      status=200 queries=1002 comment_queries=1000 db_time_ms=1234.0 total_ms=2480.3 bytes=428784
+/?page=2               status=200 queries=1002 comment_queries=1000 db_time_ms=1244.0 total_ms=2458.8 bytes=428784
+/recent/updated/       status=200 queries=402 comment_queries=400 db_time_ms=497.0 total_ms=985.4 bytes=173559
+
+maintained (3ded562 + final working-tree diff, git diff sha256 f7fb3e0e47532693fff48e3d7eee68d0a02c8a2f43c710f1b8c813d8e68e5979, db= path column omitted):
+/                      status=200 queries=42 comment_queries=40 db_time_ms=56.0 total_ms=114.8 bytes=21882
+/?page=2               status=200 queries=42 comment_queries=40 db_time_ms=54.0 total_ms=112.1 bytes=21917
+/?page=50              status=200 queries=42 comment_queries=40 db_time_ms=54.0 total_ms=116.7 bytes=21884
+/recent/updated/       status=200 queries=402 comment_queries=400 db_time_ms=494.0 total_ms=999.2 bytes=173559

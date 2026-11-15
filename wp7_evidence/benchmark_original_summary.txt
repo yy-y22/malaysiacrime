@@ -1,0 +1,8 @@
+MalaysiaCrime backend HTTP baseline (original)
+Local HTTP only; not browser/map performance.
+Warmups: 5; measured sequential requests per endpoint: 30
+
+Homepage: median 2571.56 ms; p95 2707.99 ms; mean 2591.33 ms; success 30; failed 0; body size 428784 bytes
+Homepage page 2: median 2570.65 ms; p95 2672.06 ms; mean 2581.04 ms; success 30; failed 0; body size 428784 bytes
+Homepage page 50: median 2584.4 ms; p95 2714.84 ms; mean 2610.19 ms; success 30; failed 0; body size 428784 bytes
+Recent Updated: median 1056.02 ms; p95 1088.83 ms; mean 1059.66 ms; success 30; failed 0; body size 173559 bytes
