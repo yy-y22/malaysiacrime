@@ -1,8 +1,8 @@
 # Architecture overview
 
-MalaysiaCrime is a Django 1.3.1 website that runs on Python 2.7. People mark a crime on a map and other people comment on it (posting comments is turned off now). Anyone can also subscribe to an area of the map to get email alerts about new reports there.
+MalaysiaCrime is a Django 1.3.1 website running on Python 2.7. People mark a crime on a map, and other people can comment on it (posting comments is turned off now). Anyone can also subscribe to an area of the map and get email alerts about new reports there.
 
-The code is split into four Django apps: `crime`, `main`, `feeds` and `monitor`. All four apps depend on one shared model, `Crime`, in [`crime/models.py`](../crime/models.py).
+The code has four Django apps: `crime`, `main`, `feeds` and `monitor`. All four depend on one shared model, `Crime`, in [`crime/models.py`](../crime/models.py).
 
 ## Diagram
 
@@ -14,7 +14,7 @@ graph TD
         cron["cron timer<br/>(once a day)"]
     end
 
-    gmaps["Google Maps API v2<br/>(shut down)"]
+    maps["Leaflet + OpenStreetMap<br/>(map library and tiles)"]
 
     subgraph L2[" "]
         h2["2. URL ROUTER<br/>reads the address,<br/>picks an app"]
@@ -47,7 +47,7 @@ graph TD
 
     h1 ~~~ h2 ~~~ h3 ~~~ h4 ~~~ h5
 
-    browser -.->|map script| gmaps
+    browser -.->|map script| maps
     browser -->|request| urls
     cron --> sendall
 
@@ -87,20 +87,20 @@ graph TD
     class crime,main,feeds,comments,monitor,sendall app
     class crimeModel,commentModel,monitonModel model
     class db store
-    class gmaps,email ext
+    class maps,email ext
 ```
 
-Read the diagram from top to bottom. Each grey band is one layer, and the layer name is written on the left.
+The diagram has five layers:
 
-1. Who starts it: most actions start from a visitor's web browser. The daily email job is started by a cron timer on the server.
-2. URL router: `urls.py` reads the start of the address (for example `/crime/`) and chooses the app that handles it.
-3. Apps: a Django app is a folder of Python code for one part of the site. The views (Python functions) in the app build the pages. `send_all` is part of the `monitor` app, but it runs from the command line instead of from a web page.
-4. Models: a model describes one kind of data, and Django saves each model as one table in the database. `Crime` is one crime report, `Comment` is a comment on a report, and `Moniton` is an email address with a map area. Most arrows go to `Crime`, because almost every app reads crime reports.
-5. Database: all the tables are saved in one SQLite file, `dev.db`.
+1. Who starts it. Most actions start from a visitor's browser. The daily email job is started by a cron timer on the server.
+2. URL router. `urls.py` reads the start of the address (for example `/crime/`) and picks the app that handles it.
+3. Apps. A Django app is a folder of Python code for one part of the site, and its views (Python functions) build the pages. `send_all` belongs to the `monitor` app, but you run it from the command line, not from a web page.
+4. Models. A model is one kind of data, and Django saves each model as a table in the database. `Crime` is one crime report, `Comment` is a comment on a report, and `Moniton` is an email address with a map area. Most arrows go to `Crime`, because almost every app reads crime reports.
+5. Database. All the tables are saved in one SQLite file, `dev.db`.
 
-The red dashed boxes are services outside the project. The browser loads the map from Google Maps API v2, which is shut down, so the map does not show. `send_all` sends its alerts through an email server, and our Docker setup does not include one.
+The red dashed boxes are services outside our project. The browser downloads the Leaflet map library from unpkg.com and the map pictures (tiles) from OpenStreetMap, so the map only works when you're online. `send_all` sends its alerts through an email server, and our Docker setup doesn't have one.
 
-The diagram is also saved as [`images/architecture.png`](images/architecture.png) and [`images/architecture.svg`](images/architecture.svg). To change it, edit [`images/architecture.mmd`](images/architecture.mmd) and render it again. You can also open [`images/architecture.excalidraw`](images/architecture.excalidraw) on [excalidraw.com](https://excalidraw.com) (File, then Open) if you want to move the boxes by hand. That file has the same boxes, arrows and layer names, but the grey bands are missing because the converter cannot make them.
+The diagram is also saved as [`images/architecture.png`](images/architecture.png) and [`images/architecture.svg`](images/architecture.svg). To change it, edit [`images/architecture.mmd`](images/architecture.mmd) and render it again. If you'd rather move the boxes by hand, open [`images/architecture.excalidraw`](images/architecture.excalidraw) on [excalidraw.com](https://excalidraw.com) (File, then Open). That file has the same boxes, arrows and layer names, just without the grey background behind each layer.
 
 ## How a request moves through the code
 
@@ -117,8 +117,8 @@ The diagram is also saved as [`images/architecture.png`](images/architecture.png
    | `/admin/` | Django's built-in admin site | (inside Django) |
    | `/static/` | CSS and images in [`static/`](../static) | only when `DEBUG = True` |
 
-3. The view function in that app reads or writes the database through a model. Then it fills in an HTML template from [`templates/`](../templates).
-4. The page loads Google Maps API v2 in [`templates/base.html`](../templates/base.html) (line 11) to draw the map. Google has shut this API down, so the map area stays empty. WP3 and WP4 will replace it with Leaflet and OpenStreetMap.
+3. The view function in that app reads or writes the database through a model, then fills in an HTML template from [`templates/`](../templates).
+4. Every page loads Leaflet 1.9.4 in [`templates/base.html`](../templates/base.html) (lines 11-12), and each page's own template uses it to draw its map. WP3 and WP4 replaced Google Maps API v2 with Leaflet. Two templates, `main/recent_commented.html` and `main/recent_updated.html`, still call Google Maps, so their map stays empty (see [Things to know](#things-to-know-before-you-change-code)).
 
 ## The four apps
 
@@ -126,45 +126,46 @@ The diagram is also saved as [`images/architecture.png`](images/architecture.png
 
 Most of the site is built around this app. It has the `Crime` model and the pages to create, show and edit a report.
 
-- [`models.py`](../crime/models.py) has the `Crime` model. Each report has a headline, date, location text, map position (`lat`, `lng`, `zoom`), an icon type, details, the author's name, the IP address of the person who posted it, an edit password and an `is_removed` flag. `save()` makes the URL slug from the headline.
+- [`models.py`](../crime/models.py) has the `Crime` model. Each report has a headline, date, location text, map position (`lat`, `lng`, `zoom`), an icon type, details, the author's name, the IP address of whoever posted it, an edit password and an `is_removed` flag. `save()` makes the URL slug from the headline. The same file has `recently_commented()`, which finds the reports with the newest comments. Both `main` and `feeds` use it. WP7 moved it here so the query is only written once.
+- [`passwords.py`](../crime/passwords.py) turns the edit password into a hash (PBKDF2 with SHA-256, 600,000 rounds) before it's saved, and checks the password when someone edits a report. WP5 added it, so passwords aren't saved as plain text anymore.
 - [`views.py`](../crime/views.py) has `create`, `update`, `show` (redirects from an id to the slug URL) and `title` (shows a report by its slug).
-- The report page, [`templates/crime/show.html`](../templates/crime/show.html), also lists the comments on that report using Django's comments app. The form for posting a new comment is inside a `{% comment %}` block (lines 57-104), so it is not shown. The original author turned it off in October 2011 (commit `375ff40`).
-- [`forms.py`](../crime/forms.py) has `CrimeCreateForm` and `CrimeUpdateForm`. To edit a report you only need the password that was set when the report was made.
-- [`migrations/`](../crime/migrations) has three South migrations. `crime` is the only app that uses South, so its tables are created by `manage.py migrate` and not by `syncdb`.
+- The report page, [`templates/crime/show.html`](../templates/crime/show.html), also lists the comments on that report using Django's comments app. The form for posting a new comment is inside a `{% comment %}` block (lines 63-110), so it doesn't show. The original author turned it off in October 2011 (commit `375ff40`).
+- [`forms.py`](../crime/forms.py) has `CrimeCreateForm` and `CrimeUpdateForm`. To edit a report, all you need is the password that was set when the report was made.
+- [`migrations/`](../crime/migrations) has five South migrations. WP5 added `0004`, which makes the password field longer (128 characters) so a hash fits, and `0005`, which turns the passwords already in the database into hashes. You can't undo `0005`. `crime` is the only app that uses South, so its tables are made by `manage.py migrate`, not by `syncdb`.
 - [`admin.py`](../crime/admin.py) shows the reports in the Django admin site.
 
 URLs: `/crime/create/`, `/crime/update/<id>/`, `/crime/show/<id>/`, `/crime/title/<slug>/`.
 
 ### `main`: home page and lists
 
-`main` does not have its own model. It reads `Crime` and Django's `Comment` model.
+`main` has no model of its own. It reads `Crime` and Django's `Comment` model.
 
 - [`views.py`](../main/views.py) has three views:
-  - `index` is the home page. It shows the newest 500 reports on the map.
+  - `index` is the home page. It shows the newest reports, 20 per page, in a list and on the map. `/?page=2` shows the next 20, and a page number that doesn't exist gives a 404 error. WP7 added the pages. Before that, the home page loaded up to 500 reports at once.
   - `recent_updated` shows the 200 reports that were changed most recently.
-  - `recent_commented` shows the reports with the newest comments.
-- [`urls.py`](../main/urls.py) also serves some simple template pages (`/about/`, `/search/`), plus `icons.js`, `robots.txt` and `sitemap.xml`.
+  - `recent_commented` shows the reports with the newest comments, using `recently_commented()` from `crime/models.py`.
+- [`urls.py`](../main/urls.py) also serves a few simple template pages (`/about/`, `/search/`), plus `icons.js`, `robots.txt` and `sitemap.xml`.
 
 URLs: `/`, `/recent/updated/`, `/recent/commented/`, `/about/`, `/search/`, `/sitemap.xml`.
 
 ### `feeds`: RSS feeds with map positions
 
-`feeds` makes GeoRSS feeds. A GeoRSS feed is an RSS feed where each item also has a map point.
+`feeds` makes GeoRSS feeds, which are RSS feeds where each item also has a point on the map.
 
 - [`feeders.py`](../feeds/feeders.py) has three feed classes:
   - `LatestEntries`: the 50 newest reports.
   - `UpdatedEntries`: the 10 reports that were changed most recently.
-  - `CommentedEntries`: the reports with the newest comments.
+  - `CommentedEntries`: the reports from the 10 newest comments, using the same `recently_commented()` function as `main`.
 
 URLs: `/feeds/latest.xml`, `/feeds/updated.xml`, `/feeds/commented.xml`.
 
-`feeds` is not in `INSTALLED_APPS` in [`settings_default.py`](../settings_default.py). The feed URLs still work because `urls.py` includes them, but `manage.py test feeds` fails with "App with label feeds could not be found".
+`feeds` isn't in `INSTALLED_APPS` in [`settings_default.py`](../settings_default.py). The feed URLs still work because `urls.py` includes them, but `manage.py test feeds` fails with "App with label feeds could not be found".
 
 ### `monitor`: email alerts for an area
 
-A visitor draws a box on the map and types an email address. Once a day, a script emails them the new reports that are inside that box.
+A visitor draws a box on the map and types an email address. Once a day, a script emails them the new reports inside that box.
 
-- [`models.py`](../monitor/models.py) has the `Moniton` model (short for "monitoring unit"). It stores the email, the edges of the box (`top`, `right`, `bottom`, `left`), the map centre and zoom, and a unique `uuid` that is used in the unsubscribe and information links.
+- [`models.py`](../monitor/models.py) has the `Moniton` model (short for "monitoring unit"). It stores the email, the edges of the box (`top`, `right`, `bottom`, `left`), the map centre and zoom, and a unique `uuid` that goes into the unsubscribe and information links.
 - [`views.py`](../monitor/views.py) has `subscribe`, `unsubscribe` and `information` (shows the area someone subscribed to).
 - [`management/commands/send_all.py`](../monitor/management/commands/send_all.py) runs as `python manage.py send_all`. It finds the reports from the last 24 hours and emails each subscriber the ones inside their box. The original site ran it from a cron job (a timer on the server). Nothing in this repository or in our Docker setup runs it automatically.
 - [`admin.py`](../monitor/admin.py) shows the subscriptions in the Django admin site.
@@ -175,13 +176,14 @@ URLs: `/monitor/subscribe/`, `/monitor/unsubscribe/<uuid>/`, `/monitor/info/<uui
 
 | File or folder | What it does |
 | --- | --- |
-| [`settings_default.py`](../settings_default.py) | Template for `settings.py`. When the container starts, Docker copies it to `settings.py` if `settings.py` does not exist yet. It uses SQLite (`dev.db`). |
-| [`__init__.py`](../__init__.py) | Makes the project folder a Python package called `malaysiacrime`. It also has `SetRemoteAddrFromForwardedFor`, a middleware that copies the `X-Forwarded-For` header into `REMOTE_ADDR` without checking it. |
+| [`settings_default.py`](../settings_default.py) | Template for `settings.py`. When the container starts, Docker copies it to `settings.py` if there isn't one yet. It uses SQLite (`dev.db`), turns CSRF protection on, and reads `SECRET_KEY` from an environment variable. If `SECRET_KEY` isn't set, it stops with an error. |
+| [`__init__.py`](../__init__.py) | Makes the project folder a Python package called `malaysiacrime`. It also has `SetRemoteAddrFromForwardedFor`, a middleware that copies the `X-Forwarded-For` header into `REMOTE_ADDR`. Since WP5 it only does this when the header is a valid IPv4 address. It still can't tell who sent the header, so on a real server only a trusted proxy should set it. |
 | [`urls.py`](../urls.py) | The root URL router (see the table above). |
 | [`manage.py`](../manage.py) | Django's command-line tool (`runserver`, `syncdb`, `migrate`, `test`, `send_all`). |
-| [`templates/`](../templates) | The HTML templates used when the site runs. `base.html` is the layout that every page shares. |
+| [`templates/`](../templates) | The HTML templates used when the site runs. `base.html` is the layout every page shares. |
 | [`static/`](../static) | CSS in `stylesheets/` (based on Blueprint), images and map icons. |
-| `crime/templates/`, `main/templates/`, `monitor/templates/` | A second, older copy of most templates. The tests use these copies (see below). |
+| `crime/templates/`, `main/templates/`, `monitor/templates/` | A second, older copy of most templates. The tests use these (see below). |
+| [`MAINTENANCE_CSRF_SECURITY.md`](../MAINTENANCE_CSRF_SECURITY.md), [`WP7_REPORT.md`](../WP7_REPORT.md) | Reports from WP5 and WP7 about what they changed and how they tested it. |
 
 ## How the apps connect
 
@@ -192,35 +194,28 @@ URLs: `/monitor/subscribe/`, `/monitor/unsubscribe/<uuid>/`, `/monitor/info/<uui
 | `feeds` | yes | yes | none |
 | `monitor` | yes (`send_all.py`) | no | `Moniton` |
 
-Every app reads `Crime`, so changing a field in [`crime/models.py`](../crime/models.py) can break all four apps. Before you change that model, check every row in this table, and remember to add a South migration.
+Every app reads `Crime`, so changing a field in [`crime/models.py`](../crime/models.py) can break all four apps. Before you change that model, go through every row in this table, and don't forget to add a South migration.
 
 ## Things to know before you change code
 
-These are the problems we know about. The "WP" column shows which work package is handling each one.
+These are the problems we know about so far. The "WP" column says which work package is handling each one. WP3, WP4, WP5 and WP7 already fixed the map on most pages, the security problems and the "recently commented" crash, so we took those out of the list.
 
 | Problem | Where | WP |
 | --- | --- | --- |
-| Map does not load (Google Maps API v2 is shut down; 8 templates call `GMap2`). The map fills in the hidden position fields, so the report, edit and subscribe forms cannot be sent. | `templates/base.html` line 11, `templates/crime/`, `templates/main/`, `templates/monitor/` | WP3, WP4 |
-| CSRF protection is turned off | `settings_default.py` line 64 | WP5 |
-| `SECRET_KEY` is a placeholder written in the code | `settings_default.py` line 53 | WP5 |
-| The `X-Forwarded-For` header is trusted without any check | `__init__.py` | WP5 |
-| Report edit passwords are saved as plain text | `crime/models.py` line 20, `crime/forms.py` | WP5 |
+| The Commented and Recently updated pages still call Google Maps API v2 (`GMap2`), which is shut down, so their map is empty. Their lists still work. | `templates/main/recent_commented.html`, `templates/main/recent_updated.html` | not assigned |
 | `feeds/tests.py` only checks that 1 + 1 = 2 | `feeds/tests.py` | WP6 |
 | The area check compares `m.bottom <= m.right` instead of `m.bottom <= x.lat` | `monitor/management/commands/send_all.py` line 27 | WP6 |
-| The tests set `TEMPLATE_DIRS` to empty for the whole test run | `crime/tests/__init__.py` lines 5-7, `monitor/tests.py` lines 134-136 | WP6 |
-| `recent_commented` can crash. It takes the report ids from the newest 500 comments but only loads the first 200 reports, then loops over all the ids. | `main/views.py` lines 54-57 | WP7 |
-| The "recently commented" query is written twice | `main/views.py` lines 54-57, `feeds/feeders.py` lines 33-36 | WP7 |
-| The home page loads up to 500 reports at once | `main/views.py` line 17 | WP7 |
+| The tests set `TEMPLATE_DIRS` to empty for the whole test run | `crime/tests/__init__.py` lines 7-9, `monitor/tests.py` lines 134-136 | WP6 |
 | `/admin/` and `/sitemap.xml` give error 500 in Docker (`TemplateDoesNotExist`) | Docker image: Django's own templates are installed in `/usr/local/django/` instead of `site-packages/django/` | not assigned |
-| Subscribing gives error 500 (`NameError`) when the email cannot be sent. `smtplib` and `HttpResponseRedirect` are used but never imported. | `monitor/views.py` line 33 (`smtplib`), lines 40, 59, 73 (`HttpResponseRedirect`) | not assigned |
-| Visitors cannot post comments, because the comment form is inside a `{% comment %}` block | `templates/crime/show.html` lines 57-104 | not assigned |
-| The sample comments use `content_type` 11, which is not the `Crime` type in a new database. They appear in the "Commented" list (which only reads `object_pk`) but not on the report pages. | `main/fixtures/comments.json` | not assigned |
+| Subscribing gives error 500 (`NameError`) when the email can't be sent, which always happens in Docker. The subscription is saved before that. `smtplib` and `HttpResponseRedirect` are used but never imported. | `monitor/views.py` line 33 (`smtplib`), lines 40, 59, 73 (`HttpResponseRedirect`) | not assigned |
+| You can't post comments, because the comment form is inside a `{% comment %}` block | `templates/crime/show.html` lines 63-110 | not assigned |
+| The sample comments use `content_type` 11, which isn't the `Crime` type in a new database. They show up in the Commented list (which only reads `object_pk`) but not on the report pages. | `main/fixtures/comments.json` | not assigned |
 
 ### Two copies of the templates
 
-Most templates exist twice: once in the root [`templates/`](../templates) folder and once inside each app (for example `main/templates/main/index.html`). The two copies are not the same.
+Most templates exist twice: once in the root [`templates/`](../templates) folder and once inside each app (for example `main/templates/main/index.html`). The two copies are different.
 
 - When the site runs, Django looks in the root `templates/` folder first, so it uses the root copy.
 - When the tests run, [`crime/tests/__init__.py`](../crime/tests/__init__.py) and [`monitor/tests.py`](../monitor/tests.py) set `TEMPLATE_DIRS` to empty, so Django uses the app copy.
 
-So if you change a page, change the root copy. If a test checks that page, check whether the app copy needs the same change.
+So if you change a page, change the root copy, and if a test checks that page, see whether the app copy needs the same change.

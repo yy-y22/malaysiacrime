@@ -5,7 +5,7 @@ graph TD
         cron["cron timer<br/>(once a day)"]
     end
 
-    gmaps["Google Maps API v2<br/>(shut down)"]
+    maps["Leaflet + OpenStreetMap<br/>(map library and tiles)"]
 
     subgraph L2[" "]
         h2["2. URL ROUTER<br/>reads the address,<br/>picks an app"]
@@ -38,7 +38,7 @@ graph TD
 
     h1 ~~~ h2 ~~~ h3 ~~~ h4 ~~~ h5
 
-    browser -.->|map script| gmaps
+    browser -.->|map script| maps
     browser -->|request| urls
     cron --> sendall
 
@@ -78,4 +78,4 @@ graph TD
     class crime,main,feeds,comments,monitor,sendall app
     class crimeModel,commentModel,monitonModel model
     class db store
-    class gmaps,email ext
+    class maps,email ext

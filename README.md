@@ -1,40 +1,31 @@
-<div align="center">
+# MalaysiaCrime
 
 <img src="static/images/logo.gif" alt="Malaysia Crime logo">
 
-# MalaysiaCrime
+MalaysiaCrime is a website where people can report crimes on a map of Malaysia, comment on them, and get email alerts for an area they pick. It was built between 2009 and 2011 with Python 2.7 and Django 1.3.1.
 
-A website where people report crimes on a map of Malaysia, comment on them, and get email alerts for an area they choose.
+Our group's repository, https://github.com/yy-y22/malaysiacrime, is a fork of [Sinar/malaysiacrime](https://github.com/Sinar/malaysiacrime), which is archived now. Sinar's copy was itself a fork of [zuLazman/malaysiacrime](https://github.com/zuLazman/malaysiacrime). We are 8 students maintaining it for WIF3005 Software Maintenance and Evolution at Universiti Malaya. We split the work into work packages (WP1 to WP8), and this README is part of WP2.
 
-[Run it](#run-it-with-docker) | [Run the tests](#run-the-tests) | [How the code is organised](docs/ARCHITECTURE.md) | [Contributing](CONTRIBUTING.md)
-
-</div>
-
-MalaysiaCrime was built between 2009 and 2011 with Python 2.7 and Django 1.3.1. Our group's repository, https://github.com/yy-y22/malaysiacrime, is a fork of [Sinar/malaysiacrime](https://github.com/Sinar/malaysiacrime), which is archived now (Sinar's copy was itself a fork of [zuLazman/malaysiacrime](https://github.com/zuLazman/malaysiacrime)). We are a group of 8 students maintaining it for the WIF3005 Software Maintenance and Evolution course at Universiti Malaya.
-
-The site lets people:
+On the site you can:
 
 - report a crime with a headline, date, place, details and a point on the map
 - browse reports on the home page, by most recent update, or by most recent comment
-- read the comments on a report (the original author turned off posting new comments in 2011)
-- subscribe to an area of the map with an email address, and get an email about new reports there
-- follow new reports through GeoRSS feeds (RSS feeds that also include the map position)
+- read the comments on a report (the original author turned off new comments in 2011)
+- subscribe to an area of the map with your email and get an email when there is a new report there
+- follow new reports through GeoRSS feeds, which are RSS feeds that also have the map position
 
-> [!WARNING]
-> The map does not work yet. The site uses Google Maps API v2, which Google has shut down, so the map area is empty. The map is also what fills in the position for the report, edit and subscribe forms, so these forms cannot be sent from the browser. The pages still load. Work packages 3 and 4 will replace the map with Leaflet and OpenStreetMap.
+About the map: WP3 and WP4 replaced the old Google map with Leaflet and OpenStreetMap on the home page, the report pages and the subscribe pages. The Commented and Recently updated pages still use Google Maps API v2. Google shut that API down, so the map on those two pages is empty, but the list of reports under it still works.
 
 ## Run it with Docker
 
-Docker runs the project inside a small Linux "container" that already has Python 2.7 and the correct package versions. You do not need to install Python or Django on your computer.
+Docker runs the project inside a small Linux container that already has Python 2.7 and the right package versions, so you don't need to install Python or Django yourself.
 
-### What you need
+You need two things:
 
-| Tool | How to check it works |
-| --- | --- |
-| [Git](https://git-scm.com/downloads) | `git --version` prints a version number. |
-| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Open Docker Desktop. The bottom-left corner says **Engine running**. `docker compose version` prints a version number. |
+- [Git](https://git-scm.com/downloads). Check it with `git --version`.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/). Open it and wait until the bottom-left corner says Engine running. Then check it with `docker compose version`.
 
-Type the commands below in a terminal. On Windows you can use PowerShell or Command Prompt. On macOS or Linux, use Terminal.
+Type the commands below in a terminal. On Windows you can use PowerShell or Command Prompt, and on macOS or Linux use Terminal.
 
 ### Steps
 
@@ -50,44 +41,76 @@ Type the commands below in a terminal. On Windows you can use PowerShell or Comm
    cd malaysiacrime
    ```
 
-3. Build the container and start the website:
+3. Set a secret key. Django uses it to sign cookies and other data, and the project won't start without it. You have to set it in every new terminal before any `docker compose` command, and that includes the second terminal you open for the tests. On your own computer any long random text is fine, and it can be different each time.
+
+   In PowerShell:
+
+   ```powershell
+   $env:SECRET_KEY = [guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N")
+   ```
+
+   In Command Prompt:
+
+   ```bat
+   set SECRET_KEY=%RANDOM%%RANDOM%%RANDOM%%RANDOM%%RANDOM%%RANDOM%%RANDOM%%RANDOM%
+   ```
+
+   On macOS or Linux:
+
+   ```bash
+   export SECRET_KEY="$(openssl rand -hex 32)"
+   ```
+
+   If you skip this, Docker stops with `required variable SECRET_KEY is missing a value`. Don't save your key in any file in the repository. WP5 added this step, and [MAINTENANCE_CSRF_SECURITY.md](MAINTENANCE_CSRF_SECURITY.md) explains why.
+
+4. Build the container and start the website:
 
    ```bash
    docker compose up --build
    ```
 
-   The first time takes a few minutes because Docker has to download Python 2.7 and install the packages. It is ready when the terminal shows:
+   The first time takes a few minutes, because Docker has to download Python 2.7 and install the packages. It's ready when you see:
 
    ```text
    Development server is running at http://0.0.0.0:8000/
    Quit the server with CONTROL-C.
    ```
 
-4. Open http://127.0.0.1:8000 in your browser. You should see the MalaysiaCrime home page with a menu at the top.
+5. Open http://127.0.0.1:8000 in your browser. You should see the home page with a menu at the top and a map of Malaysia.
 
-5. To stop the website, go back to the terminal and press `Ctrl` + `C`.
+6. To stop it, go back to the terminal and press `Ctrl` + `C`.
 
-After the first time, `docker compose up` (without `--build`) is enough. Use `--build` again if someone changed `requirements.txt` or the `Dockerfile`.
+After the first time, `docker compose up` without `--build` is enough. Only add `--build` again if someone changed `requirements.txt` or the `Dockerfile`.
 
-If you cloned the project before, get the newest code first with `git checkout master` and then `git pull origin master`.
+If you already cloned the project before, get the newest code first with `git checkout master` and then `git pull origin master`.
 
 ### What happens when the container starts
 
-Every time the container starts, the `Dockerfile` does these steps:
+Every time the container starts, the `Dockerfile`:
 
-1. Copies `settings_default.py` to `settings.py`, but only if `settings.py` does not exist yet.
-2. Runs `python manage.py syncdb --noinput` and `python manage.py migrate`. These create the SQLite database file `dev.db`.
-3. Starts the Django development server on port 8000.
+1. copies `settings_default.py` to `settings.py`, but only if `settings.py` doesn't exist yet
+2. runs `python manage.py syncdb --noinput` and `python manage.py migrate`, which create the SQLite database file `dev.db` (or update its tables when someone adds a new migration)
+3. starts the Django development server on port 8000
 
-The project folder on your computer is shared with the container. If you edit a template, just refresh the browser. If you edit a `.py` file, the server restarts by itself.
+Your project folder is shared with the container. When you edit a template, just refresh the browser. When you edit a `.py` file, the server restarts by itself.
 
-`settings.py` and `dev.db` appear in your project folder. Both are in `.gitignore`, so Git will not commit them.
+You will see `settings.py` and `dev.db` appear in your project folder. Both are in `.gitignore`, so Git won't commit them.
 
-Note: because `settings.py` is only created when it is missing, it will not pick up later changes to `settings_default.py`. If `settings_default.py` changes, delete `settings.py` and start the container again.
+Because `settings.py` is only made when it's missing, it doesn't get later changes to `settings_default.py`. If `settings_default.py` changes, delete `settings.py` and start the container again.
+
+### If you ran the project before WP5 was merged
+
+WP5 changed `settings_default.py` on 15 November 2026. If your `settings.py` is older than that, CSRF protection is still off in it and it still has the old key written inside, so the test `test_create_view_uses_csrf_protection` fails. To fix it:
+
+1. Stop the container with `docker compose down`.
+2. Delete `settings.py` but keep `dev.db`. In PowerShell: `Remove-Item settings.py`. In Command Prompt: `del settings.py`. On macOS or Linux: `rm settings.py`.
+3. Set `SECRET_KEY` and start the container again. Docker makes a new `settings.py`.
+
+Be careful: the first start after WP5 also runs migration `0005`, which turns the edit passwords in your `dev.db` into hashes, and you can't undo that. If you want to keep your old database, copy `dev.db` somewhere else first.
 
 ### Add sample data (optional)
 
-The database is empty at the start. To add 3 sample reports and 3 comments, start the website, open a second terminal in the project folder, and run:
+The database starts empty. To add 3 sample reports and 3 comments, start the website, open a second terminal in the project folder, and run:
 
 ```bash
 docker compose exec web python manage.py loaddata main/fixtures/crimes.json main/fixtures/comments.json
@@ -95,40 +118,40 @@ docker compose exec web python manage.py loaddata main/fixtures/crimes.json main
 
 It should print `Installed 6 object(s) from 2 fixture(s)`. Then open http://127.0.0.1:8000/recent/updated/ to see the reports.
 
-The sample comments put the reports in the **Commented** list, but you will not see them on the report pages. This is because the comment file links them to the wrong type of object (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#things-to-know-before-you-change-code)).
+The sample comments put the reports in the Commented list, but they don't show on the report pages. The comment file links them to the wrong type of object (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#things-to-know-before-you-change-code)).
 
 ## Run the tests
 
-Start the website first (see above). Then open a second terminal, go to the project folder, and run:
+Start the website first. Then open a second terminal, go to the project folder, set `SECRET_KEY` in it (step 3), and run:
 
 ```bash
 docker compose exec web python manage.py test crime main monitor
 ```
 
-`docker compose exec web` runs a command inside the running container. This command tests the `crime`, `main` and `monitor` apps. Django makes a separate test database for the tests, so the data in your `dev.db` does not change.
+`docker compose exec web` runs a command inside the running container, and this one tests the `crime`, `main` and `monitor` apps. Django makes a separate database for the tests, so your `dev.db` stays the same.
 
-At the moment the result looks like this:
+Right now the result looks like this (your time will be different):
 
 ```text
-Ran 24 tests in 3.155s
+Ran 48 tests in 7.499s
 
 FAILED (errors=1)
 ```
 
-23 tests pass. The 1 error is `test_get_sitemap` (`TemplateDoesNotExist: sitemap.xml`). We already know about it, and it is listed in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#things-to-know-before-you-change-code). The time will be different on your computer.
+47 tests pass. The 1 error is `test_get_sitemap` (`TemplateDoesNotExist: sitemap.xml`). We already know about it, and it's in the list in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#things-to-know-before-you-change-code).
 
-We left `feeds` out of the command because it is not in `INSTALLED_APPS`, so `manage.py test feeds` fails. Its only test checks that 1 + 1 = 2 anyway. Work package 6 will replace it with real tests.
+We left `feeds` out of the command because it isn't in `INSTALLED_APPS`, so `manage.py test feeds` fails. Its only test checks that 1 + 1 = 2 anyway. WP6 will replace it with real tests.
 
 ## Useful commands
 
-Run these from the project folder.
+Run these from the project folder, after you set `SECRET_KEY` in that terminal.
 
 | Command | What it does |
 | --- | --- |
 | `docker compose up --build` | Build the container and start the website. |
-| `docker compose up -d` | Start the website in the background, so you can keep using the terminal. |
+| `docker compose up -d` | Start the website in the background so you can keep using the terminal. |
 | `docker compose logs -f web` | Show the server output. Press `Ctrl` + `C` to stop watching. |
-| `docker compose down` | Stop and remove the container. Your code and `dev.db` are kept. |
+| `docker compose down` | Stop and remove the container. Your code and `dev.db` stay. |
 | `docker compose exec web python manage.py test crime main monitor` | Run the tests. |
 | `docker compose exec web python manage.py shell` | Open a Python shell with the project loaded. |
 
@@ -158,26 +181,26 @@ Run these from the project folder.
    rm dev.db
    ```
 
-3. Start the website again with `docker compose up`. It creates a new, empty `dev.db`.
+3. Run `docker compose up` again. It makes a new, empty `dev.db`.
 
 ## Pages to try
 
 | Address | Page |
 | --- | --- |
-| http://127.0.0.1:8000/ | Home page |
-| http://127.0.0.1:8000/crime/create/ | Report a crime form (it opens, but cannot be sent without the map) |
-| http://127.0.0.1:8000/recent/updated/ | Recently updated reports |
-| http://127.0.0.1:8000/recent/commented/ | Recently commented reports |
-| http://127.0.0.1:8000/monitor/subscribe/ | Subscribe to an area |
+| http://127.0.0.1:8000/ | Home page. The newest reports, 20 per page, in a list and on the map. |
+| http://127.0.0.1:8000/crime/create/ | Report a crime. Move the map until the pin in the centre is on the right place. |
+| http://127.0.0.1:8000/recent/updated/ | Recently updated reports (map is empty) |
+| http://127.0.0.1:8000/recent/commented/ | Recently commented reports (map is empty) |
+| http://127.0.0.1:8000/monitor/subscribe/ | Subscribe to an area (sending the form gives an error page, see below) |
 | http://127.0.0.1:8000/feeds/latest.xml | GeoRSS feed of the newest reports |
 
 ## Known problems
 
-- The map is empty because Google Maps API v2 is shut down. Without it, the report, edit and subscribe forms cannot be sent from the browser.
-- Visitors cannot post comments. The comment form on the report page is turned off in the template.
+- The map on the Commented and Recently updated pages is empty, because those two pages still use Google Maps API v2. No work package covers them yet.
+- You can't post comments. The comment form on the report page is turned off in the template.
 - http://127.0.0.1:8000/admin/ and http://127.0.0.1:8000/sitemap.xml show an error page (`TemplateDoesNotExist`).
-- If the subscribe form does get sent (for example by a test or a script), the site shows an error page (`NameError`). The container has no email server, and `monitor/views.py` is missing the import it needs to handle that case.
-- The security settings are not safe for a public server. CSRF protection is off, `SECRET_KEY` is a placeholder in `settings_default.py`, and report edit passwords are saved as plain text. Work package 5 is fixing these, so please do not put this version on the internet.
+- Sending the subscribe form shows an error page (`NameError`). The subscription still gets saved, but the confirmation email can't be sent because the container has no email server, and `monitor/views.py` is missing the import it needs to handle that error.
+- Please don't put this version on the internet. WP5 fixed the CSRF, `SECRET_KEY` and password problems, but the site still runs on Django 1.3.1, which hasn't had security updates for years.
 
 The full list, with file names and line numbers, is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#things-to-know-before-you-change-code).
 
@@ -192,6 +215,9 @@ malaysiacrime/
 ├── templates/             # HTML templates used by the running site
 ├── static/                # CSS, images and map icons
 ├── docs/                  # Architecture overview and diagram
+├── wp7_evidence/          # Speed test results from WP7
+├── MAINTENANCE_CSRF_SECURITY.md  # WP5 report: CSRF, SECRET_KEY, passwords
+├── WP7_REPORT.md          # WP7 report: Commented list fix, 20 reports per page
 ├── settings_default.py    # Settings template (copied to settings.py)
 ├── urls.py                # Root URL routes
 ├── manage.py              # Django command-line tool
@@ -200,4 +226,4 @@ malaysiacrime/
 └── docker-compose.yml     # Runs the "web" container on port 8000
 ```
 
-To understand what each app does and how they connect, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Before you change anything, please read [CONTRIBUTING.md](CONTRIBUTING.md) for our rules on branches, commits, pull requests and labels.
+If you want to know what each app does and how they connect, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Before you change anything, please read [CONTRIBUTING.md](CONTRIBUTING.md) for our rules on branches, commits, pull requests and labels.
