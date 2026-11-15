@@ -1,6 +1,6 @@
-import os
 from datetime import datetime, timedelta
 from xml.dom import minidom
+from xml.etree import ElementTree
 
 from django.conf import settings
 from django.contrib.comments.models import Comment
@@ -60,6 +60,20 @@ class MainTestCase(TestCase):
         """
         response = self.client.get('/sitemap.xml')
 
+        self.assertEquals(response.status_code, 200)
+        root = ElementTree.fromstring(response.content)
+        namespace = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
+        self.assertEquals(root.tag, namespace + 'urlset')
+        self.assertEquals(
+            [entry.find(namespace + 'loc').text for entry in root],
+            [entry['location'] for entry in response.context['urlset']]
+        )
+        self.assertEquals(
+            [entry.find(namespace + 'lastmod').text for entry in root],
+            ['2009-04-01', '2009-04-30', '2009-05-01']
+        )
+        self.assertEquals(root.findall('.//' + namespace + 'priority'), [])
+
         self.assertEquals(response.context['urlset'][0]['location'], "http://example.com/crime/title/terrible-crime-2/")
         self.assertEquals(response.context['urlset'][1]['location'], "http://example.com/crime/title/kidnap-of-dpm/")
         self.assertEquals(response.context['urlset'][2]['location'], "http://example.com/crime/title/daylight-extortion/")
@@ -90,19 +104,7 @@ def comment_on(object_pk, minute):
         submit_date=datetime(2010, 1, 1) + timedelta(minutes=minute))
 
 
-class RealTemplatesTestCase(TestCase):
-    """
-    crime/tests and monitor/tests set TEMPLATE_DIRS = () at import time, which makes
-    the stub main/templates/main/*.html render instead of the real pages. Restore the
-    project templates for these tests only.
-    """
-    def setUp(self):
-        # addCleanup also restores the setting when a subclass setUp fails.
-        self.addCleanup(setattr, settings, 'TEMPLATE_DIRS', settings.TEMPLATE_DIRS)
-        settings.TEMPLATE_DIRS = (os.path.join(settings.PROJECT_DIR, 'templates'),)
-
-
-class RecentCommentedTestCase(RealTemplatesTestCase):
+class RecentCommentedTestCase(TestCase):
     """
     /recent/commented/: non-removed crimes ordered by latest comment, taken from the
     500 most recent comments, at most 200 crimes. Missing and removed crimes are
@@ -178,7 +180,7 @@ class RecentCommentedTestCase(RealTemplatesTestCase):
         self.assertEquals(self.commented(), [a.pk])
 
 
-class CommentedFeedTestCase(RealTemplatesTestCase):
+class CommentedFeedTestCase(TestCase):
     """/feeds/commented.xml: same rules as the page, with a 10-comment window and 10 items."""
     def feed_links(self):
         response = self.client.get('/feeds/commented.xml')
@@ -211,13 +213,12 @@ class CommentedFeedTestCase(RealTemplatesTestCase):
         self.assertEquals(self.feed_links(), [self.link(crime)])
 
 
-class IndexPaginationTestCase(RealTemplatesTestCase):
+class IndexPaginationTestCase(TestCase):
     """
     Homepage: active crimes, 20 per page, newest first with id as tie-breaker.
     Invalid page values give 404; an empty dataset still has a page 1.
     """
     def setUp(self):
-        super(IndexPaginationTestCase, self).setUp()
         crimes = make_crimes(45)
         # All share one timestamp except the first, so ordering must fall back to -id.
         Crime.objects.update(created_at=datetime(2010, 1, 1))

@@ -1,10 +1,12 @@
 import django
 from datetime import datetime
 
+from django.conf import settings
 from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase
 
+from crime.models import Crime
 from models import Moniton
 
 
@@ -16,7 +18,10 @@ class MonitonTestCase(TestCase):
     fixtures = ['monitor/fixtures/monitons.json', 'monitor/fixtures/crimes.json']
 
     def setUp(self):
-        pass
+        # App-local templates match this test's isolated URL configuration.
+        original_dirs = settings.TEMPLATE_DIRS
+        self.addCleanup(setattr, settings, 'TEMPLATE_DIRS', original_dirs)
+        settings.TEMPLATE_DIRS = ()
 
     def test_get_subscribe(self):
         """
@@ -131,6 +136,64 @@ class MonitonTestCase(TestCase):
         pass
 
 
-# Disabled TEMPLATE_DIRS so that custom templates would not intefere with tests.
-from django.conf import settings
-settings.TEMPLATE_DIRS = ()
+class AreaNotificationTestCase(TestCase):
+    """Send alerts only for reports inside or on the subscribed rectangle."""
+    fixtures = ['monitor/fixtures/monitons.json', 'monitor/fixtures/crimes.json']
+
+    def setUp(self):
+        # Keep one subscriber and one report from the last 24 hours.
+        Moniton.objects.exclude(pk=1).delete()
+        Moniton.objects.filter(pk=1).update(
+            lat=4.0, lng=102.0,
+            top=5.0, bottom=3.0, left=100.0, right=105.0,
+        )
+        Crime.objects.exclude(pk=2).delete()
+
+    def _notify_at(self, lat, lng):
+        Crime.objects.filter(pk=2).update(lat=lat, lng=lng)
+        call_command('send_all', 2009, 1, 3, 0, 0, 0)
+
+    def test_report_inside_area_sends_notification(self):
+        self._notify_at(4.0, 102.0)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['kegan@example.com'])
+        self.assertIn('Terrible Crime Middle In Date', mail.outbox[0].body)
+
+    def test_report_south_of_area_sends_no_notification(self):
+        self._notify_at(2.9, 102.0)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_report_north_of_area_sends_no_notification(self):
+        self._notify_at(5.1, 102.0)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_report_west_of_area_sends_no_notification(self):
+        self._notify_at(4.0, 99.9)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_report_east_of_area_sends_no_notification(self):
+        self._notify_at(4.0, 105.1)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_report_on_south_boundary_sends_notification(self):
+        self._notify_at(3.0, 102.0)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_report_on_north_boundary_sends_notification(self):
+        self._notify_at(5.0, 102.0)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_report_on_west_boundary_sends_notification(self):
+        self._notify_at(4.0, 100.0)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_report_on_east_boundary_sends_notification(self):
+        self._notify_at(4.0, 105.0)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_area_with_negative_longitudes_sends_notification(self):
+        Moniton.objects.filter(pk=1).update(
+            lng=-102.0, left=-105.0, right=-100.0,
+        )
+        self._notify_at(4.0, -102.0)
+        self.assertEqual(len(mail.outbox), 1)

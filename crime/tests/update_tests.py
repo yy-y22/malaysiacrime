@@ -1,4 +1,5 @@
 from datetime import date
+from django.conf import settings
 from django.test import TestCase
 
 from crime.models import Crime
@@ -13,7 +14,10 @@ class UpdateTestCase(TestCase):
     fixtures = ['crime/fixtures/crimes']
 
     def setUp(self):
-        pass
+        # App-local templates match this test's isolated URL configuration.
+        original_dirs = settings.TEMPLATE_DIRS
+        self.addCleanup(setattr, settings, 'TEMPLATE_DIRS', original_dirs)
+        settings.TEMPLATE_DIRS = ()
 
     def test_get_update(self):
         """
