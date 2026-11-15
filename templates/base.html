@@ -8,10 +8,11 @@
     <title>{% block title %}{% endblock %}</title>
     <link href="{{ MEDIA_URL }}stylesheets/base.css" rel="stylesheet" type="text/css" media="screen, projection"/>
     <!--[if IE]><link href="/stylesheets/blueprint/ie.css" rel="stylesheet" type="text/css" media="screen, projection"/><![endif]-->
-    <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=ABQIAAAAnJLlw5vKfNQWDanaSWeKqRTZlE7kmkEf407ZrC6woqvldhRE3hQPc-s73V-l62omjS2VoIkPROnnog&amp;sensor=false" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     {% block map_script %}{% endblock %}
 </head>
-<body onload="initialize()" onunload="GUnload()">
+<body>
 <div class="container">
 {% block header %}
     <div class="span-6" style="padding-top: 8px; text-align: left;">
