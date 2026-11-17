@@ -64,9 +64,9 @@
             // handle lat, lng and zoom
             updateFields();
             map.on('move', function() { marker.setLatLng(map.getCenter()); }); // keep the pin in the centre while dragging
-            map.on('moveend', updateFields);          
+            map.on('moveend', updateFields); // save the position when dragging stops         
         }
-        document.addEventListener('DOMContentLoaded', initialize);                           // save the position when dragging stops
+        document.addEventListener('DOMContentLoaded', initialize);                           
     </script>
 {% endblock %}
 
