@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 
 {% block map_script %}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{% url main-icons-js %}" type="text/javascript"></script>
     <script type="text/javascript">
         var map = null;
@@ -66,8 +64,9 @@
             // handle lat, lng and zoom
             updateFields();
             map.on('move', function() { marker.setLatLng(map.getCenter()); }); // keep the pin in the centre while dragging
-            map.on('moveend', updateFields);                                      // save the position when dragging stops
+            map.on('moveend', updateFields); // save the position when dragging stops         
         }
+        document.addEventListener('DOMContentLoaded', initialize);                           
     </script>
 {% endblock %}
 

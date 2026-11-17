@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 
 {% block map_script %}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{% url main-icons-js %}" type="text/javascript"></script>
     <script type="text/javascript">
         var map = null;
@@ -65,6 +63,7 @@
             map.on('move', function() { marker.setLatLng(map.getCenter()); });
             map.on('moveend', updateFields);
         }
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 {% endblock %}
 
