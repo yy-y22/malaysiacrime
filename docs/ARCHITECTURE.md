@@ -194,15 +194,12 @@ Every app reads `Crime`, so changing a field in [`crime/models.py`](../crime/mod
 
 ## Things to know before you change code
 
-These are the problems we know about so far. The "WP" column says which work package is handling each one. WP3, WP4, WP5 and WP7 already fixed the map on most pages, the security problems and the "recently commented" crash, so we took those out of the list.
+These are the problems we know about so far. The "WP" column says which work package is handling each one. WP3, WP4, WP5, WP6 and WP7 already fixed the map on most pages, the security problems and the "recently commented" crash, so we took those out of the list.
 
 | Problem | Where | WP |
 | --- | --- | --- |
 | The Commented and Recently updated pages still call Google Maps API v2 (`GMap2`), which is shut down, so their map is empty. Their lists still work. | `templates/main/recent_commented.html`, `templates/main/recent_updated.html` | not assigned |
-| `feeds/tests.py` only checks that 1 + 1 = 2 | `feeds/tests.py` | WP6 |
-| The area check compares `m.bottom <= m.right` instead of `m.bottom <= x.lat` | `monitor/management/commands/send_all.py` line 27 | WP6 |
-| The tests set `TEMPLATE_DIRS` to empty for the whole test run | `crime/tests/__init__.py` lines 7-9, `monitor/tests.py` lines 134-136 | WP6 |
-| `/admin/` and `/sitemap.xml` give error 500 in Docker (`TemplateDoesNotExist`) | Docker image: Django's own templates are installed in `/usr/local/django/` instead of `site-packages/django/` | not assigned |
+| The admin template problem reported during WP2 needs a fresh browser check. WP6 supplied the sitemap template and its passing endpoint test. | Admin template lookup; `templates/sitemap.xml`; `main/tests.py` | admin follow-up not assigned |
 | Subscribing gives error 500 (`NameError`) when the email can't be sent, which always happens in Docker. The subscription is saved before that. `smtplib` and `HttpResponseRedirect` are used but never imported. | `monitor/views.py` line 33 (`smtplib`), lines 40, 59, 73 (`HttpResponseRedirect`) | not assigned |
 | You can't post comments, because the comment form is inside a `{% comment %}` block | `templates/crime/show.html` lines 63-110 | not assigned |
 | The sample comments use `content_type` 11, which isn't the `Crime` type in a new database. They show up in the Commented list (which only reads `object_pk`) but not on the report pages. | `main/fixtures/comments.json` | not assigned |
@@ -212,6 +209,8 @@ These are the problems we know about so far. The "WP" column says which work pac
 Most templates exist twice: once in the root [`templates/`](../templates) folder and once inside each app (for example `main/templates/main/index.html`). The two copies are different.
 
 - When the site runs, Django looks in the root `templates/` folder first, so it uses the root copy.
-- When the tests run, [`crime/tests/__init__.py`](../crime/tests/__init__.py) and [`monitor/tests.py`](../monitor/tests.py) set `TEMPLATE_DIRS` to empty, so Django uses the app copy.
+- Crime and monitor view tests temporarily select the app copies and register cleanup to restore `TEMPLATE_DIRS`, including after failures. WP6 removed the earlier import-time global mutation; see [WP6 testing notes](wp6-testing.md).
 
 So if you change a page, change the root copy, and if a test checks that page, see whether the app copy needs the same change.
+
+WP6 also replaced the dummy feed tests and corrected the notification rectangle check. These are completed maintenance changes, rather than outstanding defects. The [WP8 register](WP8_CONTRIBUTIONS.md) links their merged PR and verification evidence.
