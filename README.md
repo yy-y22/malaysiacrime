@@ -116,25 +116,21 @@ The sample comments put the reports in the Commented list, but they don't show o
 
 ## Run the tests
 
-Start the website first. Then open a second terminal, go to the project folder, set `SECRET_KEY` in it (step 3), and run:
+Set `SECRET_KEY` as shown in the setup section. Run the following block in macOS/Linux Terminal or Windows PowerShell (not Command Prompt). It matches [Docker tests](.github/workflows/tests.yml) and does not require a running web server:
 
-```bash
-docker compose exec web python manage.py test crime main monitor
+```sh
+docker compose build web
+docker compose run --rm --no-deps -T web sh -ec '
+  if [ ! -f settings.py ]; then
+    cp settings_default.py settings.py
+  fi
+  python manage.py test crime main monitor feeds --settings=malaysiacrime.settings_default --noinput
+'
 ```
 
-`docker compose exec web` runs a command inside the running container, and this one tests the `crime`, `main` and `monitor` apps. Django makes a separate database for the tests, so your `dev.db` stays the same.
+Django creates a separate test database and captures test email in memory. The explicit settings module uses the tracked configuration, so an older local `settings.py` cannot hide the registered `feeds` application.
 
-Right now the result looks like this (your time will be different):
-
-```text
-Ran 48 tests in 7.499s
-
-FAILED (errors=1)
-```
-
-47 tests pass. The 1 error is `test_get_sitemap` (`TemplateDoesNotExist: sitemap.xml`). We already know about it, and it's in the list in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#things-to-know-before-you-change-code).
-
-We left `feeds` out of the command because it isn't in `INSTALLED_APPS`, so `manage.py test feeds` fails. Its only test checks that 1 + 1 = 2 anyway. WP6 will replace it with real tests.
+The [master CI run for `3d58b30`](https://github.com/yy-y22/malaysiacrime/actions/runs/44152682510/job/134284977413) records **73 tests, OK**. This is a result for that commit; check your own branch's CI before merging. WP6 replaced the dummy feed tests, corrected the notification-area check, isolated test template settings and added the missing sitemap template. See [WP6 testing notes](docs/wp6-testing.md).
 
 ## Useful commands
 
@@ -146,7 +142,7 @@ Run these from the project folder, after you set `SECRET_KEY` in that terminal.
 | `docker compose up -d` | Start the website in the background so you can keep using the terminal. |
 | `docker compose logs -f web` | Show the server output. Press `Ctrl` + `C` to stop watching. |
 | `docker compose down` | Stop and remove the container. Your code and `dev.db` stay. |
-| `docker compose exec web python manage.py test crime main monitor` | Run the tests. |
+| `docker compose exec web python manage.py test crime main monitor feeds --settings=malaysiacrime.settings_default --noinput` | Run all four apps’ tests in an already running container. |
 | `docker compose exec web python manage.py shell` | Open a Python shell with the project loaded. |
 
 ### Start again with an empty database
@@ -192,7 +188,7 @@ Run these from the project folder, after you set `SECRET_KEY` in that terminal.
 
 - The map on the Commented and Recently updated pages is empty, because those two pages still use Google Maps API v2. No work package covers them yet.
 - You can't post comments. The comment form on the report page is turned off in the template.
-- http://127.0.0.1:8000/admin/ and http://127.0.0.1:8000/sitemap.xml show an error page (`TemplateDoesNotExist`).
+- The admin template problem reported during WP2 still needs browser verification. The missing sitemap template was added by WP6 and its endpoint is covered by the passing test suite; it is no longer listed as a missing-template defect.
 - Sending the subscribe form shows an error page (`NameError`). The subscription still gets saved, but the confirmation email can't be sent because the container has no email server, and `monitor/views.py` is missing the import it needs to handle that error.
 - Please don't put this version on the internet. WP5 fixed the CSRF, `SECRET_KEY` and password problems, but the site still runs on Django 1.3.1, which hasn't had security updates for years.
 
@@ -221,3 +217,7 @@ malaysiacrime/
 ```
 
 If you want to know what each app does and how they connect, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Before you change anything, please read [CONTRIBUTING.md](CONTRIBUTING.md) for our rules on branches, commits, pull requests and labels.
+
+## Maintenance evidence
+
+See the [changelog](CHANGELOG.md), [member contribution register](docs/WP8_CONTRIBUTIONS.md) and [Show Progress 2 presenter handoff](docs/SHOW_PROGRESS_2_HANDOFF.md). The register separates merged work, verified tests and coordination tasks that are still pending.

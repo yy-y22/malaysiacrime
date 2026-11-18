@@ -78,13 +78,7 @@ If Git says there is a merge conflict, it means you and someone else changed the
 
 ### Run the tests
 
-Start the app first (see the [README](README.md)). Then open a second terminal in the project folder, set `SECRET_KEY` in it like the README shows, and run:
-
-```bash
-docker compose exec web python manage.py test crime main monitor
-```
-
-Right now there are 48 tests. 47 pass and 1 gives an error (`test_get_sitemap`), which we already know about (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#things-to-know-before-you-change-code)). Your PR must not add any new failures or errors. If you add a feature or fix a bug, try to add a test for it as well.
+Follow [Run the tests in README](README.md#run-the-tests) to run the same four-app suite as GitHub Actions, including `feeds`, with the tracked settings module. A running web server is not required. The [master run for `3d58b30`](https://github.com/yy-y22/malaysiacrime/actions/runs/44152682510/job/134284977413) records 73 tests, OK; your branch must pass its own checks. The old missing-sitemap error was fixed by WP6. If you add a feature or fix a bug, add a regression test where practical.
 
 Also open http://127.0.0.1:8000 and look at the pages you changed yourself.
 
@@ -201,7 +195,7 @@ If a change fits more than one type, pick the label for its main purpose and men
 
 ## Continuous integration (CI)
 
-GitHub doesn't run the tests automatically yet. WP6 is adding a GitHub Actions workflow for this. Until then, please run the tests on your own computer before you open a PR, and write the result in the PR description.
+[Docker tests](.github/workflows/tests.yml) builds the Docker image and runs `crime main monitor feeds` on pushes and pull requests. It generates a temporary `SECRET_KEY` and uses `malaysiacrime.settings_default`. Include your local result or its exact blocker in the PR description, and check the hosted result for the current PR commit before merging. A green test run does not replace checking affected browser flows.
 
 ## Questions
 

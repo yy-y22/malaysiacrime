@@ -57,5 +57,4 @@ The test runner selects the tracked `settings_default` so an older local
 - Template cleanup was also checked with a different test order; the original
   `TEMPLATE_DIRS` value was restored after the suite.
 
-The workflow still needs its first run on GitHub after the branch is pushed.
-Local verification of the Docker commands is separate from a hosted CI result.
+Hosted verification is now available: [master run 44152682510](https://github.com/yy-y22/malaysiacrime/actions/runs/44152682510/job/134284977413) completed successfully on `3d58b3077520bdec4b0a13905119274adba012d1`; the job log records **73 tests, OK**. This supplements the original local results above. Each new branch must pass its own CI run.
