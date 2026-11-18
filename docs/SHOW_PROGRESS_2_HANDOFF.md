@@ -6,6 +6,7 @@ Prepared by Osman for the assigned presenter on 18 November 2026. This is an evi
 
 - Application snapshot: [`3d58b3077520bdec4b0a13905119274adba012d1`](https://github.com/yy-y22/malaysiacrime/commit/3d58b3077520bdec4b0a13905119274adba012d1), including WPs 1–7 and Malak's post-merge map fix, PR #8.
 - Baseline test evidence: [CI run 44152682510, test job](https://github.com/yy-y22/malaysiacrime/actions/runs/44152682510/job/134284977413), **73 tests, OK**. This verifies the automated suite on that SHA, not live map tiles or outgoing email.
+- WP8 documentation is proposed in [PR #9](https://github.com/yy-y22/malaysiacrime/pull/9), not merged. Its first commit, `044a94f`, passed [hosted CI](https://github.com/yy-y22/malaysiacrime/actions/runs/44249174155); no extra application functionality is implied.
 - Use the [contribution register](WP8_CONTRIBUTIONS.md) for member, PR, commit and merge-date evidence; use the [changelog](../CHANGELOG.md) for the maintenance sequence.
 - Tutorial 5 compares the inherited **2011 snapshot `941fc5b`** with maintenance in **2026**. Missing README, blank setup defaults, the old area-check bug and disabled CSRF are baseline findings, not unchanged current-master defects.
 

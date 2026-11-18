@@ -4,6 +4,8 @@ This is a record of merged group maintenance, reconstructed from GitHub PR metad
 
 ## Unreleased — WP8 documentation and coordination
 
+Proposed in [PR #9](https://github.com/yy-y22/malaysiacrime/pull/9); not merged.
+
 - Add an evidence-backed contribution register and presenter handoff; prepare the Tutorial 5 table in the shared Google Doc.
 - Reconcile stale test and CI instructions with WP6. No application or dependency versions change.
 - WP8 remains partial while repository-owner Issues enablement, destination-report insertion and final presenter rehearsal are pending. See [the register](docs/WP8_CONTRIBUTIONS.md).
